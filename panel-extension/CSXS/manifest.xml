@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Flow Background & Theme  -  a small CEP panel that lives next to Flow.
+
+  It does three things:
+    1. lets you pick the background picture (an animated .gif is fine)
+    2. lets you recolour the Flow panel and the veil over the picture
+    3. installs / removes the tiny background engine inside the Flow extension
+
+  Node is enabled on purpose: picking files and writing theme.json need it.
+-->
+<ExtensionManifest Version="7.0"
+                   ExtensionBundleId="com.antho.flowbg.panel"
+                   ExtensionBundleVersion="1.0.29"
+                   ExtensionBundleName="Flow Background &amp; Theme"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.antho.flowbg.panel.main" Version="1.0.0"/>
+  </ExtensionList>
+
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="AEFT" Version="[22.0,99.9]"/>
+    </HostList>
+    <LocaleList>
+      <Locale Code="All"/>
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="9.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+
+  <DispatchInfoList>
+    <Extension Id="com.antho.flowbg.panel.main">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./js/panel.js</ScriptPath>
+          <CEFCommandLine>
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--mixed-context</Parameter>
+            <Parameter>--allow-file-access-from-files</Parameter>
+            <Parameter>--allow-file-access</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Flow Background</Menu>
+          <Geometry>
+            <Size>
+              <Width>320</Width>
+              <Height>560</Height>
+            </Size>
+          </Geometry>
+          <Icons/>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

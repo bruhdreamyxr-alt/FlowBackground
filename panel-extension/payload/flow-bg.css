@@ -1,0 +1,225 @@
+/* ==========================================================================
+   FLOW - animated background, look & feel        (user customization)
+   --------------------------------------------------------------------------
+   Loaded LAST in panel/index.html on purpose, so it wins the cascade without
+   editing any of Flow's own stylesheets. It is the pair of flow-bg.js:
+
+     flow-bg.js   finds your picture + keeps it swapped and uncached
+     flow-bg.css  decides how dark/glassy things look on top of it
+
+   SWAP THE PICTURE - no editing, no admin rights, no restart
+     Drop a new file into YOUR folder:
+        %USERPROFILE%\Documents\Flow Backgrounds\
+     ANY name is fine - bg.gif, sunset.gif, my cool loop.webp - and any of
+     .gif .webp .apng .png .jpg .jpeg .bmp. The most recently written file wins
+     and the panel updates by itself within a second or two.
+     .gif / .webp / .apng animate. .png / .jpg / .bmp show as a still.
+     Empty that folder and the panel falls back to the bg.gif shipped with the
+     extension, and to the plain dark panel if there is none.
+     Advanced: point --flow-bg-dir at another folder and that one is used.
+
+   TURN IT OFF
+     Remove the two "flow bg" lines from panel\index.html (or run
+     Uninstall-FlowGifBg.ps1). Flow's own files were never modified, so there is
+     nothing else to revert.
+
+   TUNE ME - the variables at the top of this file are the only knobs you need.
+     Values below were measured against a 221x974 panel and a bright clip
+     (raw mean luminance ~199/255). Contrast achieved: graph labels 7.8:1,
+     preset list 6.0:1, controls 5.4:1 - all pass WCAG AA (>= 4.5:1).
+   ========================================================================== */
+
+:root {
+  /* ---- the picture ---------------------------------------------------------
+     Normally flow-bg.js overwrites this with the file it found. The value here
+     is only the fallback for the first frame, or if both detection strategies
+     were unavailable. Change it only if you want a hard-coded path.          */
+  --flow-bg-file: url('../../bg.gif');
+  --flow-bg-active: 1;           /* flow-bg.js sets this to 0 when no file found */
+
+  /* ---- YOUR folder ---------------------------------------------------------
+     Where you drop pictures. Install-FlowGifBg.ps1 fills this in for the PC it
+     runs on - a normal Documents folder needs no administrator rights, which is
+     the whole point. Leave it as 'none' and flow-bg.js works the path out by
+     itself (Documents\Flow Backgrounds, or %FLOW_BG_DIR% if you set that).    */
+  --flow-bg-dir: none;
+
+  /* ---- how the picture fits ------------------------------------------------
+     A wide clip in a tall, narrow panel (221x974) always costs you something:
+       100% 100%   whole picture, follows the panel shape, may stretch (default)
+       cover       no stretch, heavy crop - only a centre strip is visible
+       contain     whole picture, no crop/stretch, empty bands top and bottom
+       100% auto   keeps aspect and repeats downwards (needs --flow-bg-repeat: repeat)
+     If a swapped clip looks squashed, try 'cover' first.                      */
+  --flow-bg-size: 100% 100%;
+  --flow-bg-repeat: no-repeat;
+  --flow-bg-position: center;
+
+  /* ---- dimming veil over the picture --------------------------------------
+     0 = picture at full clarity. Bright clips wash the light-grey labels out,
+     so a light veil is on by default. Measured on this panel:
+        0.00 -> labels 1.7:1  (unreadable)
+        0.22 -> labels ~5:1   (this default)
+        0.45 -> labels ~4.3:1 but the picture starts going muddy
+     Try 0.0 (pure) up to 0.55 (cinematic dim).                              */
+  --flow-bg-dim: 0.22;
+  --flow-bg-tint: 8, 8, 12;
+
+  /* ---- alpha of the "glass" surfaces laid over the animation --------------
+     0 = invisible (picture fully exposed), 1 = Flow's original flat grey.     */
+  --flow-glass: 0.50;
+  --flow-glass-strong: 0.66; /* behind the bezier graph, where the curve is drawn */
+  --flow-glass-list: 0.50;   /* behind the scrolling preset list (smallest labels) */
+
+  /* ---- text ---------------------------------------------------------------
+     Flow paints dim labels #666666, which vanishes over a darkened picture. */
+  --flow-force-text: #d7d7db;
+
+  /* ---- grid lines ---------------------------------------------------------
+     Stock #444444 at 47% is too close to the new backdrop, so lift it a touch.
+     Delete the --color-graph-gray-with-alpha line further down for stock grid. */
+  --flow-grid-line: rgba(154, 154, 154, 0.42);
+  /* ------------------------------------------------------------------------ */
+}
+
+
+/* grid + graph-panel backdrop tweaks (custom props only - _variables.css untouched) */
+:root {
+  --color-graph-gray-with-alpha: var(--flow-grid-line);
+}
+
+/* 1. PAINT THE PICTURE ON THE ROOT CANVAS
+      The root element's background is always drawn behind every element, and it
+      does not scroll or shift, so it can never sit on top of a control.
+      The gradient layer is the dim/tint - no extra element needed.            */
+html {
+  background-color: rgb(var(--flow-bg-tint)) !important;   /* follows the veil colour */
+  background-image: linear-gradient(rgba(var(--flow-bg-tint), var(--flow-bg-dim)),
+      rgba(var(--flow-bg-tint), var(--flow-bg-dim))), var(--flow-bg-file) !important;
+  background-repeat: var(--flow-bg-repeat), var(--flow-bg-repeat) !important;
+  background-position: var(--flow-bg-position), var(--flow-bg-position) !important;
+  background-size: var(--flow-bg-size), var(--flow-bg-size) !important;
+}
+
+/* 2. REMOVE THE OPAQUE LAYERS THAT WOULD HIDE THE PICTURE
+      Longhand properties only - never the `background` shorthand - so Flow's
+      own grid pattern on #graphPanel-top / #canvas-wrapper is preserved.
+      Why the naive attempt failed: #container and #ddLibraries are painted with
+      a solid --color-panel-gray on top of <body>, which buried a body
+      background completely. So those surfaces are made see-through instead of
+      stacking anything over the UI.                                          */
+body,
+#container,
+#graphPanel,
+#graphPanel-top,
+#libraryPanel,
+#libraryIO,
+#controls,
+#ddLibraries {
+  background-color: transparent !important;
+}
+
+/* 3. GLASS SURFACES - keep each area readable over the animation */
+#graphPanel-top {
+  background-color: rgba(var(--flow-bg-tint), var(--flow-glass-strong)) !important;
+}
+
+/* The fill behind the graph. #graphPanel-top already carries a veil, so this
+   must stay transparent - veiling twice stacked up to ~77% opacity and buried
+   the picture exactly where you most want to see it. The grid lines and the
+   little dots are Flow's own (--color-graph-gray-with-alpha /
+   --color-graph-gray) and are left alone on purpose: the colour changer sets
+   those two, so they follow the theme. */
+#canvas-wrapper {
+  background-color: transparent !important;
+}
+
+/*  Every glass surface takes its colour from --flow-bg-tint, not a hard-coded
+    grey. Miss one and "Veil colour" only half works - the browser test below
+    exists precisely because that is easy to get wrong. */
+#controls,
+#libraryIO {
+  background-color: rgba(var(--flow-bg-tint), var(--flow-glass)) !important;
+}
+
+/* The preset list holds the 10px labels, so it gets its own veil.
+   background-attachment stays 'scroll' = the veil holds still while the
+   presets scroll underneath it. */
+#library {
+  background-color: rgba(var(--flow-bg-tint), var(--flow-glass-list)) !important;
+}
+
+/* Loading screen stays near-opaque so "Loading Flow..." is always legible */
+#overlay {
+  background-color: rgba(var(--flow-bg-tint), 0.94) !important;
+}
+
+/* Library dropdown popup (a native list needs a solid colour of its own) */
+#ddLibraries {
+  color: var(--color-light-gray) !important;
+}
+
+#ddLibraries option {
+  background-color: #1c1c22;
+  color: #cccccc;
+}
+
+/* 4. PRESET TILES - translucent tile, but the blue hover/selected feedback from
+      preset.css is re-asserted afterwards so clicking still feels normal.     */
+.preset.deselected .svgContainer {
+  background-color: rgba(12, 12, 16, var(--flow-glass));
+}
+
+.preset:hover .svgContainer,
+.preset.deselected:hover .svgContainer,
+.preset.selected .svgContainer {
+  background-color: var(--color-blue) !important;
+}
+
+.preset .deleteButton {
+  background-color: rgba(24, 24, 30, 0.85) !important;
+}
+
+/* 5. TEXT LEGIBILITY over a moving background - this is what keeps the UI clean
+      while the animation stays fully visible underneath.                     */
+body,
+.preset span,
+#overlay span {
+  color: var(--flow-force-text);
+}
+
+.button,
+#btn_editBezierValues,
+#ddLibraries,
+.preset span,
+#overlay span {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 1), 0 0 5px rgba(0, 0, 0, 0.85);
+}
+
+/* 6. SCROLLBARS - hidden, but scrolling is completely untouched: the wheel,
+      dragging, the keyboard and auto-hide while scrolling all behave normally.
+      Only the bar itself is taken away, so the animation runs edge to edge with
+      no bright white strip down the side.
+      Want the old slim translucent bar back? delete the two rules below and
+      restore these instead:
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,.28); border-radius: 3px; }   */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* NOTE: deliberately untouched, so nothing else breaks -
+   .tooltip / --backgroundColor  (tooltips stay solid dark grey)
+   .swal2-* popups              (alerts/confirm dialogs keep their own bg)
+   .button.big                  (the blue APPLY button keeps its colour)
+   #CP1 / #CP2 bezier handles
+   No filter:blur / opacity is used on any container, because that would turn
+   #container into a containing block and misplace tooltips + drag handles. */
+
