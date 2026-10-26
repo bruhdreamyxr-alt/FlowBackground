@@ -1,0 +1,217 @@
+/* ==========================================================================
+   Flow Background & Theme - panel styling
+   Dark, compact, AE-ish. Deliberately independent of Flow's own stylesheets:
+   this panel must never be able to break Flow, and Flow must never be able to
+   restyle this panel.
+   ========================================================================== */
+
+:root {
+  --bg:      #232323;
+  --panel:   #2c2c2c;
+  --line:    #3d3d3d;
+  --text:    #cccccc;
+  --dim:     #8f8f8f;
+  --accent:  #4a8ae4;
+  --ok:      #57b64a;
+  --warn:    #d8a33a;
+  --bad:     #d8574a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 12px/1.45 "Open Sans", "Segoe UI", "Segoe UI Emoji", "Myriad Pro", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body { padding-bottom: 14px; }
+
+/* ---- header --------------------------------------------------------------- */
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(#313131, #282828);
+}
+h1 {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  color: #e8e8e8;
+}
+
+.pill {
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #3a3a3a;
+  color: var(--dim);
+  border: 1px solid var(--line);
+}
+.pill.ok      { background: rgba(87,182,74,.15); color: var(--ok);   border-color: rgba(87,182,74,.4); }
+.pill.warn    { background: rgba(216,163,58,.15); color: var(--warn); border-color: rgba(216,163,58,.4); }
+.pill.bad     { background: rgba(216,87,74,.15);  color: var(--bad);  border-color: rgba(216,87,74,.4); }
+
+/* ---- sections ------------------------------------------------------------- */
+section {
+  padding: 12px 14px 14px;
+  border-bottom: 1px solid var(--line);
+}
+h2 {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+
+/* ---- buttons -------------------------------------------------------------- */
+button {
+  flex: 1 1 auto;
+  min-width: 84px;
+  padding: 7px 10px;
+  border: 1px solid #464646;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover:not(:disabled)  { background: #464646; }
+button:active:not(:disabled) { background: #2f2f2f; }
+button:disabled              { opacity: .45; cursor: default; }
+button.primary               { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover:not(:disabled) { background: #5c9bec; }
+button.danger:hover:not(:disabled)  { background: #7a3b35; border-color: #a4483f; }
+
+/* ---- the current picture -------------------------------------------------- */
+.current {
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: #1d1d1d;
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--dim);
+  word-break: break-all;
+}
+.current.has { color: var(--text); }
+.current b    { color: var(--ok); font-weight: 600; }
+
+/* ---- fields --------------------------------------------------------------- */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.field > span {
+  flex: 0 0 84px;
+  font-size: 11px;
+  color: var(--dim);
+}
+.field > output {
+  flex: 0 0 44px;
+  text-align: right;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+
+input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #4a4a4a;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+
+input[type="color"] {
+  flex: 0 0 40px;
+  width: 40px; height: 22px;
+  padding: 0;
+  border: 1px solid #464646;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+select {
+  flex: 1;
+  padding: 5px 6px;
+  border: 1px solid #464646;
+  border-radius: 4px;
+  background: #3a3a3a;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---- presets -------------------------------------------------------------- */
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.presets button {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.presets i {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+/* ---- banner: shown whenever the engine is missing from Flow --------------- */
+.banner {
+  margin: 10px 14px 0;
+  padding: 9px 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(216,163,58,.45);
+  background: rgba(216,163,58,.12);
+  color: #e8cf9a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.banner b { color: var(--warn); }
+
+/* ---- text bits ------------------------------------------------------------ */
+.hint  { margin: 0 0 10px; font-size: 11px; color: var(--dim); }
+.note  { margin-top: 8px; font-size: 11px; color: var(--dim); min-height: 15px; }
+.note.ok  { color: var(--ok); }
+.note.bad { color: var(--bad); }
+
+footer {
+  padding: 10px 14px 0;
+  font-size: 10px;
+  color: #6f6f6f;
+  word-break: break-all;
+}

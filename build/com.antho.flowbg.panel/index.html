@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flow Background</title>
+  <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+
+  <header>
+    <h1>Flow background</h1>
+    <span id="engine" class="pill">checking…</span>
+  </header>
+
+  <div id="banner" class="banner" hidden>
+    <b>The engine is not inside Flow yet.</b>
+    Nothing on this panel can change the Flow panel until you press
+    <b>Install into Flow</b> below (one permission prompt, once).
+  </div>
+
+  <section>
+    <h2>Picture</h2>
+    <div class="row">
+      <button id="btn-pick" class="primary">Choose picture…</button>
+      <button id="btn-clear">Clear</button>
+      <button id="btn-open">Open folder</button>
+    </div>
+    <div class="current" id="current">no picture yet</div>
+    <input type="file" id="file-input" accept=".gif,.webp,.apng,.png,.jpg,.jpeg,.bmp" hidden>
+  </section>
+
+  <section>
+    <h2>Look</h2>
+
+    <label class="field">
+      <span>Fit</span>
+      <select id="opt-size">
+        <option value="100% 100%">Stretch to panel</option>
+        <option value="cover">Fill, crop the overflow</option>
+        <option value="contain">Fit the whole picture</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Veil</span>
+      <input type="range" id="opt-dim" min="0" max="0.8" step="0.02">
+      <output id="out-dim"></output>
+    </label>
+
+    <label class="field">
+      <span>Veil colour</span>
+      <input type="color" id="opt-tint">
+      <output id="out-tint"></output>
+    </label>
+
+    <label class="field">
+      <span>Glass</span>
+      <input type="range" id="opt-glass" min="0" max="1" step="0.02">
+      <output id="out-glass"></output>
+    </label>
+
+    <label class="field">
+      <span>Label text</span>
+      <input type="color" id="opt-text">
+      <output id="out-text"></output>
+    </label>
+
+    <label class="field">
+      <span>Flow accent</span>
+      <input type="color" id="opt-accent">
+      <output id="out-accent"></output>
+    </label>
+
+    <label class="field">
+      <span>Graph dots</span>
+      <input type="color" id="opt-graph">
+      <output id="out-graph"></output>
+    </label>
+
+    <label class="field">
+      <span>Curve</span>
+      <input type="color" id="opt-curve">
+      <output id="out-curve"></output>
+    </label>
+
+    <label class="field">
+      <span>Points</span>
+      <input type="color" id="opt-points">
+      <output id="out-points"></output>
+    </label>
+
+    <div class="row">
+      <button id="btn-reset-theme">Default look</button>
+    </div>
+  <div class="row">
+    <button id="btn-export-look">Export look…</button>
+    <button id="btn-import-look">Import look…</button>
+    <input type="file" id="look-input" accept=".json" hidden>
+  </div>
+    <label class="field"><span>Auto-match AE brightness</span><input type="checkbox" id="opt-auto-ae"></label>`n    <div class="presets" id="presets"></div>
+    <div class="note" id="look-note"></div>
+  </section>
+
+  <section>
+    <h2>Setup</h2>
+    <p class="hint">Flow itself lives in Program&nbsp;Files, so the background engine has to be
+      copied into it once, with one admin prompt. Changing the picture and the colours
+      in this panel never needs admin rights again.</p>
+    <div class="row">
+      <button id="btn-install">Install into Flow</button>
+      <button id="btn-uninstall">Remove from Flow</button>
+    </div>
+    <div class="row">
+      <button id="btn-diag">Copy diagnostics</button>
+      <button id="btn-restart-ae">Restart After Effects</button>
+    </div>
+    <div class="note" id="setup-note"></div>
+  </section>
+
+  <footer id="watched"></footer>
+
+  <script src="js/panel.js"></script>
+</body>
+</html>
