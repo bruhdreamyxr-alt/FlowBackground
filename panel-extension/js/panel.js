@@ -608,6 +608,7 @@ function openFolder() {
       lookNote(copied ? 'Diagnostics copied to the clipboard, and saved as ' + basename(file) + '.'
                       : 'Diagnostics saved as ' + basename(file) + '.');
     });
+    $('btn-update').addEventListener('click', checkUpdates);
     $('btn-reset-theme').addEventListener('click', function () {
       applyDefaults();
       lookNote('Back to the built-in look - saved.');
@@ -710,6 +711,49 @@ function openFolder() {
     });
   }
 
+  function compareVersions(a, b) {
+    var pa = String(a || '').split('.');
+    var pb = String(b || '').split('.');
+    var n = Math.max(pa.length, pb.length);
+    for (var i = 0; i < n; i++) {
+      var x = parseInt(pa[i] || '0', 10) || 0;
+      var y = parseInt(pb[i] || '0', 10) || 0;
+      if (x !== y) { return x - y; }
+    }
+    return 0;
+  }
+  function checkUpdates(silent) {
+    if (!cp || !fs) { note('Node is required to check for updates.', true); return; }
+    var https = null;
+    try { https = require('https'); } catch (e) { https = null; }
+    if (!https) { note('Network module unavailable.', true); return; }
+    note('Checking for updates...');
+    var opts = { hostname: 'api.github.com', path: '/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', headers: { 'User-Agent': 'FlowBackground' } };
+    https.get(opts, function (res) {
+      var data = '';
+      res.on('data', function (c) { data += c; });
+      res.on('end', function () {
+        try {
+          var j = JSON.parse(data);
+          var tag = String(j.tag_name || '').replace(/^v/i, '');
+          var cur = panelVersion();
+          if (!tag || compareVersions(tag, cur) <= 0) { if (!silent) { note('You are up to date (' + cur + ').'); } return; }
+          var asset = null;
+          var assets = j.assets || [];
+          for (var i = 0; i < assets.length; i++) { if (/\.zxp$/i.test(assets[i].name)) { asset = assets[i]; break; } }
+          if (!asset) { note('Newer version ' + tag + ' found, but no ZXP asset attached.', true); return; }
+          note('Downloading ' + tag + '...');
+          var file = join(launcherDir(), 'Flow-Background-update.zxp');
+          var out = fs.createWriteStream(file);
+          https.get(asset.browser_download_url, function (res2) {
+            res2.pipe(out);
+            out.on('finish', function () { out.close(); note('Update ' + tag + ' downloaded. Opening installer...'); shellOpen(file); });
+          }).on('error', function (e) { note('Download failed: ' + e.message, true); });
+        } catch (e) { note('Update check failed: ' + e.message, true); }
+      });
+    }).on('error', function (e) { note('Network error: ' + e.message, true); });
+  }
+
   function init() {
     try {
       setupEnv();
@@ -721,6 +765,15 @@ function openFolder() {
       wire();
       refresh();
       setInterval(refresh, 1500);
+      setTimeout(function () { checkUpdates(true); }, 4000);
+      try {
+        var welcomed = false;
+        try { welcomed = (localStorage.getItem('flowbg.welcomed') === '1'); } catch (e) {}
+        if (!welcomed) {
+          try { localStorage.setItem('flowbg.welcomed', '1'); } catch (e2) {}
+          note('Welcome to Flow Background! Pick a picture and make Flow yours.');
+        }
+      } catch (e3) {}
     } catch (e) {
       try { window.onerror(e && e.message ? e.message : String(e)); } catch (e2) {}
     }
