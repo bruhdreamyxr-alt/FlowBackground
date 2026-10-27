@@ -74,6 +74,50 @@
       np = require('path');
     }
   } catch (e) { fs = null; }
+  /* ---- CEP native fs fallback (when Node is unavailable, e.g. AE 2026) ---- */
+  if (!fs && typeof window !== 'undefined' && window.cep && window.cep.fs) {
+    var cepFs = window.cep.fs;
+    var isWin = (typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '')) ||
+                (typeof process !== 'undefined' && process.platform === 'win32');
+    var sep = isWin ? '\\\\' : '/';
+    fs = {
+      readdirSync: function (dir) {
+        var r = cepFs.readdir(dir);
+        if (r.err) { throw new Error('readdir failed'); }
+        return r.data || [];
+      },
+      statSync: function (p) {
+        var r = cepFs.stat(p);
+        if (r.err) { throw new Error('stat failed'); }
+        var d = r.data;
+        return {
+          isFile: function () { return d.isFile(); },
+          isDirectory: function () { return d.isDirectory(); },
+          size: d.size || 0,
+          mtimeMs: (d.mtime instanceof Date) ? d.mtime.getTime() : (d.mtime || 0)
+        };
+      },
+      readFileSync: function (p, enc) {
+        var r = cepFs.readFile(p);
+        if (r.err) { throw new Error('readFile failed'); }
+        return r.data || '';
+      },
+      existsSync: function (p) {
+        try { var r = cepFs.stat(p); return !r.err; } catch (e) { return false; }
+      },
+      watch: function () { /* not available - polling covers it */ return { close: function(){} }; }
+    };
+    if (!np) {
+      np = {
+        sep: sep,
+        join: function () {
+          var parts = Array.prototype.slice.call(arguments);
+          return parts.join(sep).replace(new RegExp(sep + '+', 'g'), sep);
+        }
+      };
+    }
+  }
+
 
   function toFsPath(urlDir) {                    /* file:///C:/x/y/ -> C:\x\y */
     var p = urlDir.replace(/^file:\/\/\/?/i, '');
@@ -95,6 +139,10 @@
   function homeDir() {
     var h = envVar('USERPROFILE') || envVar('HOME');
     if (!h && fs) { try { h = require('os').homedir(); } catch (e) { h = ''; } }
+    if (!h && typeof window !== 'undefined' && window.__adobe_cep__) {
+      try { h = window.__adobe_cep__.getFolderPath('user'); } catch (e) { h = ''; }
+      if (!h) { try { h = window.__adobe_cep__.getFolderPath('documents'); } catch (e2) { h = ''; } }
+    }
     return h;
   }
   var FSROOT = fs ? toFsPath(ROOT) : null;
@@ -492,7 +540,12 @@
 
   hookCanvas();                                   // before Flow draws anything
   scan();                                        // first paint already correct
-  var __pollTimer = null;`n  function scheduleScan(ms) {`n    if (__pollTimer) { clearTimeout(__pollTimer); }`n    __pollTimer = setTimeout(function () { __pollTimer = null; scan(); scheduleScan(document.hidden ? HIDDEN_POLL_MS : POLL_MS); }, ms);`n  }`n  scheduleScan(POLL_MS);                     // safety net for edits/saves
+  var __pollTimer = null;
+  function scheduleScan(ms) {
+    if (__pollTimer) { clearTimeout(__pollTimer); }
+    __pollTimer = setTimeout(function () { __pollTimer = null; scan(); scheduleScan(document.hidden ? HIDDEN_POLL_MS : POLL_MS); }, ms);
+  }
+  scheduleScan(POLL_MS);                     // safety net for edits/saves
   if (!fs) { setInterval(scan, REDISCOVER_MS); }  // a new name needs re-discovery
 
   if (fs) {                                       // instant reaction to a swap
