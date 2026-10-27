@@ -23,6 +23,31 @@
   var fs = null, path = null, os = null, cp = null;
   try { fs = require('fs'); path = require('path'); os = require('os'); cp = require('child_process'); }
   catch (e) { /* no Node: the panel still shows status, just no file work */ }
+
+  /* ---- CEP native fs fallback (when Node is unavailable) ---- */
+  if (!fs && typeof window !== 'undefined' && window.cep && window.cep.fs) {
+    var cepFs = window.cep.fs;
+    var isWin = (typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '')) ||
+                (typeof process !== 'undefined' && process.platform === 'win32');
+    var sep = isWin ? '\\' : '/';
+    fs = {
+      readdirSync: function (dir) { var r = cepFs.readdir(dir); if (r.err) { throw new Error('readdir failed'); } return r.data || []; },
+      statSync: function (p) { var r = cepFs.stat(p); if (r.err) { throw new Error('stat failed'); } var d = r.data; return { isFile: function () { return d.isFile(); }, isDirectory: function () { return d.isDirectory(); }, size: d.size || 0, mtimeMs: (d.mtime instanceof Date) ? d.mtime.getTime() : (d.mtime || 0), mtime: (d.mtime instanceof Date) ? d.mtime : new Date(d.mtime || 0) }; },
+      readFileSync: function (p, enc) { var r = cepFs.readFile(p); if (r.err) { throw new Error('readFile failed'); } return r.data || ''; },
+      writeFileSync: function (p, data) { var r = cepFs.writeFile(p, data, 'utf-8'); if (r.err) { throw new Error('writeFile failed'); } },
+      mkdirSync: function (p, opts) { try { cepFs.makedir(p); } catch (e) {} },
+      copyFileSync: function (src, dst) { var r = cepFs.readFile(src); if (r.err) { throw new Error('readFile failed'); } var w = cepFs.writeFile(dst, r.data, 'utf-8'); if (w.err) { throw new Error('writeFile failed'); } },
+      renameSync: function (src, dst) { var r = cepFs.readFile(src); if (r.err) { throw new Error('readFile failed'); } var w = cepFs.writeFile(dst, r.data, 'utf-8'); if (w.err) { throw new Error('writeFile failed'); } try { cepFs.deleteFile(src); } catch (e) {} },
+      utimesSync: function (p, atime, mtime) { },
+      accessSync: function (p) { var r = cepFs.stat(p); if (r.err) { throw new Error('stat failed'); } },
+      existsSync: function (p) { try { var r = cepFs.stat(p); return !r.err; } catch (e) { return false; } },
+      unlinkSync: function (p) { try { cepFs.deleteFile(p); } catch (e) {} }
+    };
+    if (!path) {
+      path = { sep: sep, join: function () { var parts = Array.prototype.slice.call(arguments); return parts.join(sep).replace(new RegExp(sep + '+', 'g'), sep); }, extname: function (p) { var i = String(p).lastIndexOf('.'); return i < 0 ? '' : String(p).slice(i); }, basename: function (p) { var parts = String(p).split(/[\\/]/); return parts[parts.length - 1]; } };
+    }
+    if (!os) { os = { homedir: function () { return ''; } }; }
+  }
   var isMac = (typeof process !== 'undefined' && process.platform === 'darwin');
   var isWin = (typeof process !== 'undefined' && process.platform === 'win32');
 
