@@ -746,10 +746,20 @@ $('btn-export-look').addEventListener('click', function () {
           note('Downloading ' + tag + '...');
           var file = join(launcherDir(), 'Flow-Background-update.zxp');
           var out = fs.createWriteStream(file);
-          https.get(asset.browser_download_url, function (res2) {
-            res2.pipe(out);
-            out.on('finish', function () { out.close(); note('Update ' + tag + ' downloaded. Opening installer...'); shellOpen(file); });
-          }).on('error', function (e) { note('Download failed: ' + e.message, true); });
+          function downloadUpdate(url, redirects) {
+            if (typeof redirects === 'undefined') { redirects = 5; }
+            https.get(url, function (res2) {
+              if (res2.statusCode >= 300 && res2.statusCode < 400 && res2.headers.location && redirects > 0) {
+                res2.resume();
+                downloadUpdate(res2.headers.location, redirects - 1);
+                return;
+              }
+              if (res2.statusCode !== 200) { note('Download failed: HTTP ' + res2.statusCode, true); try { fs.unlinkSync(file); } catch (e) {} return; }
+              res2.pipe(out);
+              out.on('finish', function () { out.close(); note('Update ' + tag + ' downloaded. Opening installer...'); shellOpen(file); });
+            }).on('error', function (e) { note('Download failed: ' + e.message, true); });
+          }
+          downloadUpdate(asset.browser_download_url);
         } catch (e) { note('Update check failed: ' + e.message, true); }
       });
     }).on('error', function (e) { note('Network error: ' + e.message, true); });
