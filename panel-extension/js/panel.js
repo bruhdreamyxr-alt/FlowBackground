@@ -152,7 +152,7 @@
 
   /* ---- put a picture in; newest wins --------------------------------------- */
   function usePicture(srcPath) {
-    if (!fs) { note('This panel needs Node to move files around.', true); return; }
+    if (!fs) { note('This panel needs Node to copy files. Drop your picture into the Flow Backgrounds folder instead.', true); return; }
     var e = extname(srcPath).toLowerCase();
     if (EXTS.indexOf(e) === -1) { note('Flow cannot show ' + (e || 'that file type') + '.', true); return; }
     ensureDir(env.userDir);
