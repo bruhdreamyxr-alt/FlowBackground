@@ -509,11 +509,19 @@ function openFolder() {
      itself moved on and the selectors we hook no longer exist.            */
   function panelVersion() {
     try {
-      var m = /ExtensionBundleVersion="([^"]+)"/.exec(
-        fs.readFileSync(join(env.extDir, 'CSXS', 'manifest.xml'), 'utf8'));
+      var txt = null;
+      if (fs) {
+        txt = fs.readFileSync(join(env.extDir, 'CSXS', 'manifest.xml'), 'utf8');
+      } else if (typeof window !== 'undefined' && window.cep && window.cep.fs) {
+        var r = window.cep.fs.readFile(join(env.extDir, 'CSXS', 'manifest.xml'));
+        if (!r.err) { txt = r.data; }
+      }
+      if (!txt) { return '?'; }
+      var m = /ExtensionBundleVersion="([^"]+)"/.exec(txt);
       return m ? m[1] : '?';
     } catch (e) { return '?'; }
   }
+
   function flowRelease() {
     var m = /flow-v?([\d.]+)/i.exec(env.flowDir || '');
     return m ? m[1] : '?';
