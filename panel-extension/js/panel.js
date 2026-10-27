@@ -757,6 +757,18 @@ $('btn-export-look').addEventListener('click', function () {
     return 0;
   }
   function checkUpdates(silent) {
+    if (isMac) {
+      var releaseUrl = 'https://github.com/bruhdreamyxr-alt/FlowBackground/releases/latest';
+      if (typeof window !== 'undefined' && window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) {
+        window.cep.util.openURLInDefaultBrowser(releaseUrl);
+      } else if (cp) {
+        cp.exec('open "' + releaseUrl + '"');
+      } else {
+        note('Update available: ' + releaseUrl, true);
+      }
+      if (!silent) { note('Opened the download page. Download the .zxp and double-click it.'); }
+      return;
+    }
     if (!cp || !fs) { note('Node is required to check for updates.', true); return; }
     var https = null;
     try { https = require('https'); } catch (e) { https = null; }
