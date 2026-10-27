@@ -618,7 +618,8 @@ function openFolder() {
       saveTheme(true);
       syncAeTheme();
     });
-    $('btn-export-look').addEventListener('click', function () {
+        $('btn-restart-ae').addEventListener('click', restartAE);
+$('btn-export-look').addEventListener('click', function () {
       if (!fs) { note('Node is required to export.', true); return; }
       ensureDir(env.userDir);
       var file = join(env.userDir, 'flow-look.json');
@@ -754,6 +755,26 @@ function openFolder() {
     }).on('error', function (e) { note('Network error: ' + e.message, true); });
   }
 
+  function restartAE() {
+    if (!confirm('Restart After Effects now? Save your work first.')) { return; }
+    try {
+      if (cp && fs) {
+        if (isMac) {
+          var sh = '#!/bin/sh\nsleep 3\nfor d in /Applications/Adobe\ After\ Effects*; do\n  if [ -x "$d/Contents/MacOS/After Effects" ]; then open "$d"; break; fi\ndone\n';
+          var f = join(launcherDir(), 'restart-ae.sh');
+          fs.writeFileSync(f, sh);
+          try { fs.chmodSync(f, 493); } catch (e) {}
+          cp.exec('sh "' + f + '" >/dev/null 2>&1 &');
+        } else {
+          var cmd = '@echo off\r\ntimeout /t 3 /nobreak >nul\r\nfor /d %%D in ("C:\\Program Files\\Adobe\\Adobe After Effects*") do (\r\n  if exist "%%D\\Support Files\\AfterFX.exe" start "" "%%D\\Support Files\\AfterFX.exe"\r\n)\r\n';
+          var f = join(launcherDir(), 'restart-ae.cmd');
+          fs.writeFileSync(f, cmd);
+          cp.exec('cmd.exe /c start /min "" "' + f + '"');
+        }
+      }
+    } catch (e) {}
+    try { window.__adobe_cep__.evalScript('app.quit()'); } catch (e2) {}
+  }
   function init() {
     try {
       setupEnv();
