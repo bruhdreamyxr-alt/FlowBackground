@@ -389,7 +389,12 @@
   function apply(url, token, label) {
     var s = document.documentElement.style;
     if (url) {
-      s.setProperty('--flow-bg-file', "url('" + url + '?v=' + token + "')");
+      /*  On macOS, file:// URLs with a query string (?v=...) can fail to load,
+          so drop the cache-buster there - the mtime scan still re-applies on change. */
+      var isMac = (typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '')) ||
+                  (typeof process !== 'undefined' && process.platform === 'darwin');
+      var fileUrl = isMac ? url : (url + '?v=' + token);
+      s.setProperty('--flow-bg-file', "url('" + fileUrl + "')");
       s.setProperty('--flow-bg-active', '1');
     } else {
       s.setProperty('--flow-bg-active', '0');
