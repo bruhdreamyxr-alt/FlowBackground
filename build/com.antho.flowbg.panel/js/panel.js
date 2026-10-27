@@ -730,7 +730,7 @@ $('btn-export-look').addEventListener('click', function () {
     if (!https) { note('Network module unavailable.', true); return; }
     note('Checking for updates...');
     var opts = { hostname: 'api.github.com', path: '/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', headers: { 'User-Agent': 'FlowBackground' } };
-    https.get(opts, function (res) {
+    var req = https.get(opts, function (res) {
       var data = '';
       res.on('data', function (c) { data += c; });
       res.on('end', function () {
@@ -763,6 +763,7 @@ $('btn-export-look').addEventListener('click', function () {
         } catch (e) { note('Update check failed: ' + e.message, true); }
       });
     }).on('error', function (e) { note('Network error: ' + e.message, true); });
+      req.setTimeout(10000, function () { req.destroy(); note('Update check timed out.', true); });
   }
 
   function restartAE() {
