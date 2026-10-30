@@ -261,6 +261,11 @@ function openFolder() {
     } catch (e) { /* the loader just keeps the last good theme */ }
     try { fs.copyFileSync(themePath(), backupPath()); } catch (e2) { }
   }
+  function loadTheme() {
+    var t = readTheme() || {};
+    theme = {};
+    for (var k in DEFAULTS) { theme[k] = (typeof t[k] === 'undefined') ? DEFAULTS[k] : t[k]; }
+  }
   function syncUI() {
     var tintHex = tintToHex(theme.tint) || '#08080c';
     $('opt-size').value   = theme.size;
