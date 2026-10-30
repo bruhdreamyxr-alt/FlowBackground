@@ -756,7 +756,7 @@ function openFolder() {
   }
 
   (function setupTitleMenu() {
-    var h1 = document.querySelector('h1');
+    var h1 = (typeof document.querySelector === 'function') ? document.querySelector('h1') : (document.getElementsByTagName ? document.getElementsByTagName('h1')[0] : null);
     if (!h1) { return; }
     var menu = document.createElement('div');
     menu.style.cssText = 'position:fixed;display:none;z-index:9999;background:#1e1e22;border:1px solid #444;padding:4px 0;min-width:200px;font:12px sans-serif;border-radius:6px;';
