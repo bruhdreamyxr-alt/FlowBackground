@@ -412,12 +412,23 @@ function openFolder() {
     setGlass(theme.glass);
     saveTheme(true);
     syncUI();
-    if (p.picture && fs) {
-      var src = join(env.userDir, p.picture);
-      if (exists(src)) {
-        var ext = extname(p.picture).toLowerCase();
-        var dest = join(env.userDir, 'bg' + ext);
-        try { fs.copyFileSync(src, dest); var now = new Date(); fs.utimesSync(dest, now, now); } catch (e) {}
+    if (fs) {
+      // remove any existing bg.* so only the preset's picture remains
+      try {
+        var names = fs.readdirSync(env.userDir);
+        for (var i = 0; i < names.length; i++) {
+          if (/^bg\.(gif|webp|apng|png|jpe?g|bmp)$/i.test(names[i])) {
+            try { fs.unlinkSync(join(env.userDir, names[i])); } catch (e) {}
+          }
+        }
+      } catch (e) {}
+      if (p.picture) {
+        var src = join(env.userDir, p.picture);
+        if (exists(src)) {
+          var ext = extname(p.picture).toLowerCase();
+          var dest = join(env.userDir, 'bg' + ext);
+          try { fs.copyFileSync(src, dest); var now = new Date(); fs.utimesSync(dest, now, now); } catch (e) {}
+        }
       }
     }
     refresh();
