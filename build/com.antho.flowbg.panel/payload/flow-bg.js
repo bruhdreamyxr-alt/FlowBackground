@@ -394,8 +394,8 @@
           so drop the cache-buster there - the mtime scan still re-applies on change. */
       /*  Drop the ?v= cache-buster on non-Windows file URLs: macOS does not support
           query strings on file:// URLs and fails to load the picture.           */
-      var isMac = !/^file:\/\/\/[a-z]:/i.test(url || '');
-      var fileUrl = isMac ? url : (url + '?v=' + token);
+      var noDriveLetter = !/^file:\/\/\/[a-z]:/i.test(url || '');
+      var fileUrl = noDriveLetter ? url : (url + '?v=' + token);
       s.setProperty('--flow-bg-file', "url('" + fileUrl + "')");
       s.setProperty('--flow-bg-active', '1');
     } else {
