@@ -450,13 +450,6 @@ function openFolder() {
          per-user registry value, so it needs no admin rights - just set it.  */
   function ensureDebugMode() {
     if (!cp) { return; }
-    if (isMac) {
-      for (var n = 6; n <= 15; n++) {
-        try { cp.execFileSync('defaults', ['write', 'com.adobe.CSXS.' + n, 'PlayerDebugMode', '-string', '1'], { stdio: 'ignore' }); }
-        catch (e) { /* best effort */ }
-      }
-      return;
-    }
     for (var n = 6; n <= 15; n++) {
       try {
         cp.execFileSync('reg.exe',
@@ -672,18 +665,6 @@ function openFolder() {
     return 0;
   }
   function checkUpdates(silent) {
-    if (isMac) {
-      var releaseUrl = 'https://github.com/bruhdreamyxr-alt/FlowBackground/releases/latest';
-      if (typeof window !== 'undefined' && window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) {
-        window.cep.util.openURLInDefaultBrowser(releaseUrl);
-      } else if (cp) {
-        cp.exec('open "' + releaseUrl + '"');
-      } else {
-        note('Update available: ' + releaseUrl, true);
-      }
-      if (!silent) { note('Opened the download page. Download the .zxp and double-click it.'); }
-      return;
-    }
     if (!cp || !fs) { note('Node is required to check for updates.', true); return; }
     var https = null;
     try { https = require('https'); } catch (e) { https = null; }
@@ -731,13 +712,7 @@ function openFolder() {
     if (!confirm('Restart After Effects now? Save your work first.')) { return; }
     try {
       if (cp && fs) {
-        if (isMac) {
-          var sh = '#!/bin/sh\nsleep 3\nfor d in /Applications/Adobe\ After\ Effects*; do\n  if [ -x "$d/Contents/MacOS/After Effects" ]; then open "$d"; break; fi\ndone\n';
-          var f = join(launcherDir(), 'restart-ae.sh');
-          fs.writeFileSync(f, sh);
-          try { fs.chmodSync(f, 493); } catch (e) {}
-          cp.exec('sh "' + f + '" >/dev/null 2>&1 &');
-        } else {
+   {
           var cmd = '@echo off\r\ntimeout /t 3 /nobreak >nul\r\nfor /d %%D in ("C:\\Program Files\\Adobe\\Adobe After Effects*") do (\r\n  if exist "%%D\\Support Files\\AfterFX.exe" start "" "%%D\\Support Files\\AfterFX.exe"\r\n)\r\n';
           var f = join(launcherDir(), 'restart-ae.cmd');
           fs.writeFileSync(f, cmd);

@@ -11,7 +11,7 @@
 -->
 <ExtensionManifest Version="7.0"
                    ExtensionBundleId="com.antho.flowbg.panel"
-                   ExtensionBundleVersion="1.0.74"
+                   ExtensionBundleVersion="1.0.76"
                    ExtensionBundleName="Flow Background &amp; Theme"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
