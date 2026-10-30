@@ -52,7 +52,7 @@ function Step($what, $action) {
 #  A hand-added <link>/<script> pair for flow-bg (from an earlier manual attempt)
 #  would otherwise survive as a duplicate, so fold it into our marked block.
 $script:LooseCleaned = $false
-function Clean-Loose([string]$text) {
+function Remove-LooseLines([string]$text) {
     $pats = @(
         '(?m)^[ \t]*<!--[^\r\n<>]*(?:gif background|animated GIF|flow bg|flow-bg)[^\r\n<>]*-->[ \t]*\r?\n',
         '(?m)^[ \t]*<link[^>]*flow-bg\.css[^>]*/?>[ \t]*\r?\n',
@@ -65,13 +65,13 @@ function Clean-Loose([string]$text) {
     }
     return $text
 }
-function Clean-OutsideBlock([string]$text) {
+function Merge-OutsideBlock([string]$text) {
     $pat = '(?s)' + [regex]::Escape($StartMark) + '.*?' + [regex]::Escape($EndMark)
     $m = [regex]::Match($text, $pat)
-    if (-not $m.Success) { return Clean-Loose $text }
+    if (-not $m.Success) { return Remove-LooseLines $text }
     $head = $text.Substring(0, $m.Index)
     $tail = $text.Substring($m.Index + $m.Length)
-    return (Clean-Loose $head) + $m.Value + (Clean-Loose $tail)
+    return (Remove-LooseLines $head) + $m.Value + (Remove-LooseLines $tail)
 }
 
 
@@ -207,7 +207,7 @@ foreach ($target in $targets) {
 
     $script:LooseCleaned = $false
     $blockEsc = $block.Replace('$', '$$')
-    $new = Clean-OutsideBlock $raw
+    $new = Merge-OutsideBlock $raw
     if ($script:LooseCleaned) {
         Say '  merged an existing hand-added flow-bg link/script into the managed block' 'DarkCyan'
     }
