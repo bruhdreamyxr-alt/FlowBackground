@@ -339,24 +339,46 @@ function openFolder() {
     if (!fs) { return; }
     try { ensureDir(env.userDir); fs.writeFileSync(presetsPath(), JSON.stringify(arr, null, 2)); } catch (e) {}
   }
+  /* ---- in-panel prompt modal (no native "JavaScript prompt") --------------- */
+  var modalCallback = null;
+  function showModal(title, defaultValue, cb) {
+    modalCallback = cb || null;
+    var t = $('modal-title'); if (t) { t.textContent = title; }
+    var inp = $('modal-input'); if (inp) { inp.value = (defaultValue == null ? '' : defaultValue); }
+    var m = $('modal'); if (m) { m.hidden = false; }
+    setTimeout(function () { try { if (inp) { inp.focus(); inp.select(); } } catch (e) {} }, 10);
+  }
+  function hideModal() {
+    var m = $('modal'); if (m) { m.hidden = true; }
+    modalCallback = null;
+  }
+  function confirmModal() {
+    var inp = $('modal-input');
+    var v = inp ? inp.value : '';
+    var cb = modalCallback;
+    hideModal();
+    if (typeof cb === 'function') { try { cb(v); } catch (e) {} }
+  }
+
   function saveCustomPreset() {
     if (!fs) { note('Node is required to save presets.', true); return; }
-    var name = '';
-    try { name = (window.prompt('Name this look:', '') || '').trim(); } catch (e) { name = ''; }
-    if (!name) { return; }
-    var pics = pictures();
-    var picFile = null;
-    if (pics.length) {
-      var ext = extname(pics[0].name).toLowerCase();
-      var safe = name.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'preset';
-      var destName = 'preset_' + safe + '_' + Date.now() + ext;
-      try { fs.copyFileSync(pics[0].path, join(env.userDir, destName)); picFile = destName; } catch (e) {}
-    }
-    var arr = readCustomPresets();
-    arr.push({ name: name, theme: JSON.parse(JSON.stringify(theme)), picture: picFile });
-    writeCustomPresets(arr);
-    rebuildCustomPresets();
-    note('Saved "' + name + '".');
+    showModal('Name this look:', '', function (val) {
+      var name = (val || '').trim();
+      if (!name) { return; }
+      var pics = pictures();
+      var picFile = null;
+      if (pics.length) {
+        var ext = extname(pics[0].name).toLowerCase();
+        var safe = name.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'preset';
+        var destName = 'preset_' + safe + '_' + Date.now() + ext;
+        try { fs.copyFileSync(pics[0].path, join(env.userDir, destName)); picFile = destName; } catch (e) {}
+      }
+      var arr = readCustomPresets();
+      arr.push({ name: name, theme: JSON.parse(JSON.stringify(theme)), picture: picFile });
+      writeCustomPresets(arr);
+      rebuildCustomPresets();
+      note('Saved "' + name + '".');
+    });
   }
   function applyCustomPreset(p) {
     if (!p || !p.theme) { return; }
@@ -378,12 +400,15 @@ function openFolder() {
   function renameCustomPreset(idx) {
     var arr = readCustomPresets();
     if (idx < 0 || idx >= arr.length) { return; }
-    var newName = '';
-    try { newName = (window.prompt('Rename preset:', arr[idx].name) || '').trim(); } catch (e) { newName = ''; }
-    if (!newName) { return; }
-    arr[idx].name = newName;
-    writeCustomPresets(arr);
-    rebuildCustomPresets();
+    showModal('Rename preset:', arr[idx].name, function (val) {
+      var newName = (val || '').trim();
+      if (!newName) { return; }
+      var a = readCustomPresets();
+      if (idx < 0 || idx >= a.length) { return; }
+      a[idx].name = newName;
+      writeCustomPresets(a);
+      rebuildCustomPresets();
+    });
   }
   function deleteCustomPreset(idx) {
     var arr = readCustomPresets();
@@ -693,6 +718,15 @@ function openFolder() {
       lookNote('Back to the built-in look - saved.');
     });
     $('btn-save-preset').addEventListener('click', saveCustomPreset);
+    var modalOk = $('modal-ok'); if (modalOk) { modalOk.addEventListener('click', confirmModal); }
+    var modalCancel = $('modal-cancel'); if (modalCancel) { modalCancel.addEventListener('click', hideModal); }
+    var modalInput = $('modal-input'); if (modalInput) {
+      modalInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); confirmModal(); }
+        else if (e.key === 'Escape') { e.preventDefault(); hideModal(); }
+      });
+    }
+
         $('file-input').addEventListener('change', function (ev) {
       var f = ev.target.files && ev.target.files[0];
       if (f) { usePickedFile(f); }

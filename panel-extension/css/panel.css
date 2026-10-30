@@ -223,3 +223,11 @@ footer {
 /* hide scrollbar but keep scroll */
 html, body { scrollbar-width: none; -ms-overflow-style: none; }
 ::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* ---- modal --------------------------------------------------------------- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal[hidden] { display: none; }
+.modal-box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; width: 90%; max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.modal-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #e8e8e8; }
+.modal-input { width: 100%; padding: 6px 8px; border: 1px solid #464646; border-radius: 4px; background: #1d1d1d; color: var(--text); font: inherit; margin-bottom: 10px; }
+.modal-actions button { flex: 1 1 auto; }
+
