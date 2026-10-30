@@ -854,9 +854,10 @@ function openFolder() {
     return 0;
   }
   function checkUpdates(silent) {
-    if (!silent) { try { alert('checkUpdates clicked'); } catch (e) {} }
     try {
-      if (!silent) { note('Checking for updates...'); }
+      if (!silent) {
+        try { note('Checking for updates...'); } catch (e) { alert('note failed: ' + e.message); }
+      }
       var x = new XMLHttpRequest();
       var done = false;
       x.open('GET', 'https://api.github.com/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', true);
@@ -867,22 +868,23 @@ function openFolder() {
         done = true;
         try {
           if (x.status < 200 || x.status >= 300 || !x.responseText) {
-            if (!silent) { note('Update check failed: HTTP ' + x.status, true); }
+            if (!silent) { note('Update check failed: HTTP ' + x.status, true); alert('Update check failed: HTTP ' + x.status); }
             return;
           }
           var j = JSON.parse(x.responseText);
           var tag = String(j.tag_name || '').replace(/^v/i, '');
           var cur = panelVersion();
           if (!tag || compareVersions(tag, cur) <= 0) {
-            if (!silent) { note('You are up to date (' + cur + ').'); }
+            if (!silent) { note('You are up to date (' + cur + ').'); alert('You are up to date (' + cur + ').'); }
             return;
           }
           var asset = null;
           var assets = j.assets || [];
           for (var i = 0; i < assets.length; i++) { if (/\.zxp$/i.test(assets[i].name)) { asset = assets[i]; break; } }
-          if (!asset) { note('Newer version ' + tag + ' found, but no ZXP asset attached.', true); return; }
+          if (!asset) { note('Newer version ' + tag + ' found, but no ZXP asset attached.', true); alert('Newer version ' + tag + ' found, but no ZXP asset attached.'); return; }
           if (!fs || !cp) {
             note('New version ' + tag + ' available. Opening download page...');
+            alert('New version ' + tag + ' available. Opening download page...');
             try {
               if (window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) { window.cep.util.openURLInDefaultBrowser(asset.browser_download_url); }
               else { window.open(asset.browser_download_url); }
@@ -890,6 +892,7 @@ function openFolder() {
             return;
           }
           note('Downloading ' + tag + '...');
+          alert('Downloading ' + tag + '...');
           var file = join(launcherDir(), 'Flow-Background-update.zxp');
           function downloadUpdate(url, redirects) {
             if (typeof redirects === 'undefined') { redirects = 5; }
@@ -902,24 +905,26 @@ function openFolder() {
                 var loc = y.getResponseHeader('Location');
                 if (loc && redirects > 0) { downloadUpdate(loc, redirects - 1); return; }
               }
-              if (y.status !== 200) { note('Download failed: HTTP ' + y.status, true); try { fs.unlinkSync(file); } catch (e) {} return; }
+              if (y.status !== 200) { note('Download failed: HTTP ' + y.status, true); alert('Download failed: HTTP ' + y.status); try { fs.unlinkSync(file); } catch (e) {} return; }
               try {
                 fs.writeFileSync(file, Buffer.from(y.response));
                 note('Update ' + tag + ' downloaded. Opening installer...');
+                alert('Update ' + tag + ' downloaded. Opening installer...');
                 shellOpen(file);
-              } catch (e) { note('Download failed: ' + e.message, true); }
+              } catch (e) { note('Download failed: ' + e.message, true); alert('Download failed: ' + e.message); }
             };
-            y.onerror = function () { note('Download failed: network error', true); };
-            try { y.send(); } catch (e) { note('Download failed: ' + e.message, true); }
+            y.onerror = function () { note('Download failed: network error', true); alert('Download failed: network error'); };
+            try { y.send(); } catch (e) { note('Download failed: ' + e.message, true); alert('Download failed: ' + e.message); }
           }
           downloadUpdate(asset.browser_download_url);
-        } catch (e) { note('Update check failed: ' + e.message, true); }
+        } catch (e) { note('Update check failed: ' + e.message, true); alert('Update check failed: ' + e.message); }
       };
-      x.onerror = function () { if (!silent) { note('Network error.', true); } };
-      x.ontimeout = function () { if (!silent) { note('Update check timed out.', true); } };
-      try { x.send(); } catch (e) { note('Update check failed: ' + e.message, true); }
+      x.onerror = function () { if (!silent) { note('Network error.', true); alert('Network error.'); } };
+      x.ontimeout = function () { if (!silent) { note('Update check timed out.', true); alert('Update check timed out.'); } };
+      try { x.send(); } catch (e) { note('Update check failed: ' + e.message, true); alert('Update check failed: ' + e.message); }
     } catch (e) {
-      try { note('Update check failed: ' + e.message, true); } catch (e2) { try { alert('Update check failed: ' + e.message); } catch (e3) {} }
+      try { note('Update check failed: ' + e.message, true); } catch (e2) {}
+      try { alert('Update check failed: ' + e.message); } catch (e3) {}
     }
   }
 
