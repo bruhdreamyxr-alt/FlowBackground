@@ -450,7 +450,7 @@ function openFolder() {
          per-user registry value, so it needs no admin rights - just set it.  */
   function ensureDebugMode() {
     if (!cp) { return; }
-    for (var n = 6; n <= 15; n++) {
+    for (var n = 9; n <= 13; n++) {
       try {
         cp.execFileSync('reg.exe',
           ['add', 'HKCU\\Software\\Adobe\\CSXS.' + n, '/v', 'PlayerDebugMode', '/t', 'REG_SZ', '/d', '1', '/f'],
@@ -747,7 +747,7 @@ function openFolder() {
   }
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); }
-  setTimeout(init, 50);
+  else { init(); }
 
   window.addEventListener('beforeunload', function () { try { saveTheme(true); } catch (e) {} });
   } catch (e) {
