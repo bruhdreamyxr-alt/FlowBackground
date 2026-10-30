@@ -721,7 +721,7 @@ function openFolder() {
     var https = null;
     try { https = require('https'); } catch (e) { https = null; }
     if (!https) { note('Network module unavailable.', true); return; }
-    note('Checking for updates...');
+    if (!silent) { note('Checking for updates...'); }
     var opts = { hostname: 'api.github.com', path: '/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', headers: { 'User-Agent': 'FlowBackground' } };
     var req = https.get(opts, function (res) {
       var data = '';
@@ -756,7 +756,8 @@ function openFolder() {
         } catch (e) { note('Update check failed: ' + e.message, true); }
       });
     }).on('error', function (e) { note('Network error: ' + e.message, true); });
-      req.setTimeout(10000, function () { req.destroy(); note('Update check timed out.', true); });
+      req.setTimeout(10000, function () { req.destroy(); if (!silent) { note('Update check timed out.', true); } });
+      setTimeout(function () { if (!silent) { note('Update check timed out.', true); } }, 11000);
   }
 
   function restartAE() {
