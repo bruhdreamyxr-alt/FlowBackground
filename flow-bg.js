@@ -389,11 +389,7 @@
   function apply(url, token, label) {
     var s = document.documentElement.style;
     if (url) {
-      console.log('APPLY url=' + url + ' isMac=' + !/^file:\/\/[a-z]:/i.test(url || ''));
-      /*  On macOS, file:// URLs with a query string (?v=...) can fail to load,
-          so drop the cache-buster there - the mtime scan still re-applies on change. */
-      /*  Drop the ?v= cache-buster on non-Windows file URLs: macOS does not support
-          query strings on file:// URLs and fails to load the picture.           */
+      /*  Drop the ?v= cache-buster on non-Windows file URLs (no drive letter). */
       var noDriveLetter = !/^file:\/\/\/[a-z]:/i.test(url || '');
       var fileUrl = noDriveLetter ? url : (url + '?v=' + token);
       s.setProperty('--flow-bg-file', "url('" + fileUrl + "')");
