@@ -306,6 +306,7 @@ function openFolder() {
 
   function buildPresets() {
     var wrap = $('presets');
+    if (!wrap) { return; }
     for (var i = 0; i < PRESETS.length; i++) {
       (function (p) {
         var b = document.createElement('button');
@@ -322,6 +323,115 @@ function openFolder() {
         });
         wrap.appendChild(b);
       })(PRESETS[i]);
+    }
+  }
+
+  /* ---- custom saved presets ------------------------------------------------- */
+  function presetsPath() { return join(env.userDir, 'presets.json'); }
+  function readCustomPresets() {
+    if (!fs) { return []; }
+    try {
+      var o = JSON.parse(fs.readFileSync(presetsPath(), 'utf8'));
+      return Array.isArray(o) ? o : [];
+    } catch (e) { return []; }
+  }
+  function writeCustomPresets(arr) {
+    if (!fs) { return; }
+    try { ensureDir(env.userDir); fs.writeFileSync(presetsPath(), JSON.stringify(arr, null, 2)); } catch (e) {}
+  }
+  function saveCustomPreset() {
+    if (!fs) { note('Node is required to save presets.', true); return; }
+    var name = '';
+    try { name = (window.prompt('Name this look:', '') || '').trim(); } catch (e) { name = ''; }
+    if (!name) { return; }
+    var pics = pictures();
+    var picFile = null;
+    if (pics.length) {
+      var ext = extname(pics[0].name).toLowerCase();
+      var safe = name.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'preset';
+      var destName = 'preset_' + safe + '_' + Date.now() + ext;
+      try { fs.copyFileSync(pics[0].path, join(env.userDir, destName)); picFile = destName; } catch (e) {}
+    }
+    var arr = readCustomPresets();
+    arr.push({ name: name, theme: JSON.parse(JSON.stringify(theme)), picture: picFile });
+    writeCustomPresets(arr);
+    rebuildCustomPresets();
+    note('Saved "' + name + '".');
+  }
+  function applyCustomPreset(p) {
+    if (!p || !p.theme) { return; }
+    for (var k in DEFAULTS) { if (typeof p.theme[k] !== 'undefined') { theme[k] = p.theme[k]; } }
+    setGlass(theme.glass);
+    saveTheme(true);
+    syncUI();
+    if (p.picture && fs) {
+      var src = join(env.userDir, p.picture);
+      if (exists(src)) {
+        var ext = extname(p.picture).toLowerCase();
+        var dest = join(env.userDir, 'bg' + ext);
+        try { fs.copyFileSync(src, dest); var now = new Date(); fs.utimesSync(dest, now, now); } catch (e) {}
+      }
+    }
+    refresh();
+    note('Applied "' + p.name + '".');
+  }
+  function renameCustomPreset(idx) {
+    var arr = readCustomPresets();
+    if (idx < 0 || idx >= arr.length) { return; }
+    var newName = '';
+    try { newName = (window.prompt('Rename preset:', arr[idx].name) || '').trim(); } catch (e) { newName = ''; }
+    if (!newName) { return; }
+    arr[idx].name = newName;
+    writeCustomPresets(arr);
+    rebuildCustomPresets();
+  }
+  function deleteCustomPreset(idx) {
+    var arr = readCustomPresets();
+    if (idx < 0 || idx >= arr.length) { return; }
+    if (arr[idx].picture && fs) {
+      try { fs.unlinkSync(join(env.userDir, arr[idx].picture)); } catch (e) {}
+    }
+    arr.splice(idx, 1);
+    writeCustomPresets(arr);
+    rebuildCustomPresets();
+  }
+  function rebuildCustomPresets() {
+    var wrap = $('presets-list');
+    if (!wrap) { return; }
+    wrap.innerHTML = '';
+    var arr = readCustomPresets();
+    for (var i = 0; i < arr.length; i++) {
+      (function (p, idx) {
+        var row = document.createElement('div');
+        row.className = 'preset-row';
+        var b = document.createElement('button');
+        b.className = 'apply';
+        var dot = document.createElement('i');
+        dot.style.background = (p.theme && p.theme.accent) ? p.theme.accent : '#4a8ae4';
+        b.appendChild(dot);
+        b.appendChild(document.createTextNode(p.name));
+        b.addEventListener('click', function () { applyCustomPreset(p); });
+        row.appendChild(b);
+        var ren = document.createElement('button');
+        ren.className = 'small';
+        ren.textContent = '✎';
+        ren.title = 'Rename';
+        ren.addEventListener('click', function () { renameCustomPreset(idx); });
+        row.appendChild(ren);
+        var del = document.createElement('button');
+        del.className = 'small';
+        del.textContent = '×';
+        del.title = 'Delete';
+        del.addEventListener('click', function () { deleteCustomPreset(idx); });
+        row.appendChild(del);
+        wrap.appendChild(row);
+      })(arr[i], i);
+    }
+    if (!arr.length) {
+      var hint = document.createElement('div');
+      hint.className = 'note';
+      hint.textContent = 'No saved presets yet. Set up a look, then click "Save current look…".';
+      wrap.appendChild(hint);
     }
   }
 
@@ -582,6 +692,7 @@ function openFolder() {
       applyDefaults();
       lookNote('Back to the built-in look - saved.');
     });
+    $('btn-save-preset').addEventListener('click', saveCustomPreset);
         $('file-input').addEventListener('change', function (ev) {
       var f = ev.target.files && ev.target.files[0];
       if (f) { usePickedFile(f); }
@@ -731,6 +842,7 @@ function openFolder() {
       syncUI();
       wire();
       refresh();
+      rebuildCustomPresets();
       setInterval(refresh, 1500);
       setTimeout(function () { checkUpdates(true); }, 4000);
       try {
