@@ -807,7 +807,6 @@ $('btn-export-look').addEventListener('click', function () {
       ensureDir(env.userDir);
       ensureDebugMode();
       loadTheme();
-      buildPresets();
       syncUI();
       wire();
       refresh();
