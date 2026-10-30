@@ -393,11 +393,16 @@ function openFolder() {
       if (!name) { return; }
       var pics = pictures();
       var picFile = null;
-      if (pics.length) {
-        var ext = extname(pics[0].name).toLowerCase();
+      // find the active bg.* file, not just the newest file (preset_*. files can be newer)
+      var bgPic = null;
+      for (var i = 0; i < pics.length; i++) {
+        if (/^bg\.(gif|webp|apng|png|jpe?g|bmp)$/i.test(pics[i].name)) { bgPic = pics[i]; break; }
+      }
+      if (bgPic) {
+        var ext = extname(bgPic.name).toLowerCase();
         var safe = name.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/\s+/g, '_') || 'preset';
         var destName = 'preset_' + safe + '_' + Date.now() + ext;
-        try { fs.copyFileSync(pics[0].path, join(env.userDir, destName)); picFile = destName; } catch (e) {}
+        try { fs.copyFileSync(bgPic.path, join(env.userDir, destName)); picFile = destName; } catch (e) {}
       }
       var arr = readCustomPresets();
       arr.push({ name: name, theme: JSON.parse(JSON.stringify(theme)), picture: picFile });
