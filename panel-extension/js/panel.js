@@ -754,7 +754,8 @@ function openFolder() {
       lookNote(copied ? 'Diagnostics copied to the clipboard, and saved as ' + basename(file) + '.'
                       : 'Diagnostics saved as ' + basename(file) + '.');
     });
-    $('btn-update').addEventListener('click', checkUpdates);
+    $('btn-update').addEventListener('click', function () { try { checkUpdates(); } catch (e) { alert('checkUpdates error: ' + e.message); } });
+
     $('btn-clear-cache').addEventListener('click', clearCache);
     $('btn-reset-theme').addEventListener('click', function () {
       applyDefaults();
@@ -853,6 +854,7 @@ function openFolder() {
     return 0;
   }
   function checkUpdates(silent) {
+    if (!silent) { try { alert('checkUpdates clicked'); } catch (e) {} }
     try {
       if (!silent) { note('Checking for updates...'); }
       var x = new XMLHttpRequest();
