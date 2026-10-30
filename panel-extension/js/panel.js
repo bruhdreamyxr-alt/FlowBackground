@@ -197,6 +197,32 @@
     note(n + ' picture(s) moved to _parked - Flow is back to its plain dark panel.');
   }
 
+  function clearCache() {
+    if (!fs) { note('Node is required to clear the cache.', true); return; }
+    try { clearPictures(); } catch (e) {}
+    var parked = join(env.userDir, '_parked');
+    try {
+      var names = fs.readdirSync(parked);
+      for (var i = 0; i < names.length; i++) { try { fs.unlinkSync(join(parked, names[i])); } catch (e2) {} }
+      try { fs.rmdirSync(parked); } catch (e3) {}
+    } catch (e4) {}
+    var used = {};
+    var arr = readCustomPresets();
+    for (var i = 0; i < arr.length; i++) { if (arr[i].picture) { used[arr[i].picture] = 1; } }
+    try {
+      var names = fs.readdirSync(env.userDir);
+      for (var i = 0; i < names.length; i++) {
+        if (/^preset_.*\.(gif|webp|apng|png|jpe?g|bmp)$/i.test(names[i]) && !used[names[i]]) {
+          try { fs.unlinkSync(join(env.userDir, names[i])); } catch (e5) {}
+        }
+      }
+    } catch (e6) {}
+    try { if (typeof localStorage !== 'undefined') { localStorage.clear(); } } catch (e7) {}
+    refresh();
+    rebuildCustomPresets();
+    note('Cache cleared.');
+  }
+
 function openFolder() {
     ensureDir(env.userDir);
     try {
@@ -713,6 +739,7 @@ function openFolder() {
                       : 'Diagnostics saved as ' + basename(file) + '.');
     });
     $('btn-update').addEventListener('click', checkUpdates);
+    $('btn-clear-cache').addEventListener('click', clearCache);
     $('btn-reset-theme').addEventListener('click', function () {
       applyDefaults();
       lookNote('Back to the built-in look - saved.');
