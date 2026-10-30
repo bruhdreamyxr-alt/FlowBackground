@@ -622,29 +622,7 @@ function openFolder() {
       applyDefaults();
       lookNote('Back to the built-in look - saved.');
     });
-        $('btn-restart-ae').addEventListener('click', restartAE);
-$('btn-export-look').addEventListener('click', function () {
-      if (!fs) { note('Node is required to export.', true); return; }
-      ensureDir(env.userDir);
-      var file = join(env.userDir, 'flow-look.json');
-      try { fs.writeFileSync(file, JSON.stringify(theme, null, 2)); note('Look exported to ' + basename(file) + '.'); }
-      catch (e) { note('Could not export the look.', true); }
-    });
-    $('btn-import-look').addEventListener('click', function () { $('look-input').click(); });
-    $('look-input').addEventListener('change', function (ev) {
-      var f = ev.target.files && ev.target.files[0]; ev.target.value = '';
-      if (!f) { return; }
-      var r = new FileReader();
-      r.onload = function () {
-        try {
-          var o = JSON.parse(r.result);
-          for (var k in o) { if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) || k === 'glassStrong' || k === 'glassList' || k === 'position' || k === 'grid') { theme[k] = o[k]; } }
-          syncUI(); saveTheme(true); lookNote('Look imported.');
-        } catch (e) { lookNote('That file is not a valid look.', true); }
-      };
-      r.readAsText(f);
-    });
-    $('file-input').addEventListener('change', function (ev) {
+        $('file-input').addEventListener('change', function (ev) {
       var f = ev.target.files && ev.target.files[0];
       if (f) { usePickedFile(f); }
       ev.target.value = '';
