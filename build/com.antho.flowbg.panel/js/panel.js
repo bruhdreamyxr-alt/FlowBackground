@@ -13,7 +13,7 @@
 (function () {
   try { var __ep = document.getElementById('engine'); if (__ep) { __ep.textContent = 'loading…'; } } catch (e) {}
 
-  window.onerror = function (msg) { try { var n = document.getElementById('setup-note'); if (n) { n.textContent = 'Error: ' + msg; n.className = 'note bad'; } } catch (e) {} return false; };
+  window.onerror = function (msg) { lastError = msg; try { var n = document.getElementById('setup-note'); if (n) { n.textContent = 'Error: ' + msg; n.className = 'note bad'; } } catch (e) {} return false; };
 
   'use strict';
   try {
@@ -50,6 +50,7 @@
   }
   var isMac = (typeof process !== 'undefined' && process.platform === 'darwin');
   var isWin = (typeof process !== 'undefined' && process.platform === 'win32');
+  var lastError = '';
 
   function $(id) { return document.getElementById(id); }
   function join() {
@@ -605,7 +606,7 @@ function openFolder() {
     $('btn-install').addEventListener('click', installEngine);
     $('btn-uninstall').addEventListener('click', uninstallEngine);
     $('btn-diag').addEventListener('click', function () {
-      var text = diagnostics();
+      var text = lastError ? ('LAST ERROR: ' + lastError) : diagnostics();
       var file = join(env.userDir, 'flow-background-diagnostics.txt');
       try { ensureDir(env.userDir); fs.writeFileSync(file, text); } catch (e) { }
       var copied = false;
@@ -833,4 +834,22 @@ $('btn-export-look').addEventListener('click', function () {
     try { document.body.style.background = 'red'; } catch (e2) {}
     try { alert('PANEL ERROR: ' + (e && e.message ? e.message : e)); } catch (e3) {}
   }
+
+  (function setupTitleMenu() {
+    var h1 = document.querySelector('h1');
+    if (!h1) { return; }
+    var menu = document.createElement('div');
+    menu.style.cssText = 'position:fixed;display:none;z-index:9999;background:#1e1e22;border:1px solid #444;padding:4px 0;min-width:200px;font:12px sans-serif;border-radius:6px;';
+    var item = document.createElement('div');
+    item.textContent = 'Restart & reload extension';
+    item.style.cssText = 'padding:6px 12px;cursor:pointer;color:#e8e8ee;';
+    item.addEventListener('mouseenter', function () { this.style.background = '#333'; });
+    item.addEventListener('mouseleave', function () { this.style.background = 'transparent'; });
+    item.addEventListener('click', function () { menu.style.display = 'none'; window.location.reload(); });
+    menu.appendChild(item);
+    document.body.appendChild(menu);
+    h1.addEventListener('contextmenu', function (e) { e.preventDefault(); menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; menu.style.display = 'block'; });
+    document.addEventListener('click', function () { menu.style.display = 'none'; });
+  })();
+
 })();
