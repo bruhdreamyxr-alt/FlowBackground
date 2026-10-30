@@ -837,50 +837,75 @@ function openFolder() {
     return 0;
   }
   function checkUpdates(silent) {
-    if (!cp || !fs) { note('Node is required to check for updates.', true); return; }
-    var https = null;
-    try { https = require('https'); } catch (e) { https = null; }
-    if (!https) { note('Network module unavailable.', true); return; }
-    if (!silent) { note('Checking for updates...'); }
-    var opts = { hostname: 'api.github.com', path: '/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', headers: { 'User-Agent': 'FlowBackground' } };
-    var req = https.get(opts, function (res) {
-      var data = '';
-      res.on('data', function (c) { data += c; });
-      res.on('end', function () {
+    try {
+      if (!silent) { note('Checking for updates...'); }
+      var x = new XMLHttpRequest();
+      var done = false;
+      x.open('GET', 'https://api.github.com/repos/bruhdreamyxr-alt/FlowBackground/releases/latest', true);
+      x.setRequestHeader('User-Agent', 'FlowBackground');
+      x.timeout = 10000;
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4 || done) { return; }
+        done = true;
         try {
-          var j = JSON.parse(data);
+          if (x.status < 200 || x.status >= 300 || !x.responseText) {
+            if (!silent) { note('Update check failed: HTTP ' + x.status, true); }
+            return;
+          }
+          var j = JSON.parse(x.responseText);
           var tag = String(j.tag_name || '').replace(/^v/i, '');
           var cur = panelVersion();
-          if (!tag || compareVersions(tag, cur) <= 0) { if (!silent) { note('You are up to date (' + cur + ').'); } return; }
+          if (!tag || compareVersions(tag, cur) <= 0) {
+            if (!silent) { note('You are up to date (' + cur + ').'); }
+            return;
+          }
           var asset = null;
           var assets = j.assets || [];
           for (var i = 0; i < assets.length; i++) { if (/\.zxp$/i.test(assets[i].name)) { asset = assets[i]; break; } }
           if (!asset) { note('Newer version ' + tag + ' found, but no ZXP asset attached.', true); return; }
+          if (!fs || !cp) {
+            note('New version ' + tag + ' available. Opening download page...');
+            try {
+              if (window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) { window.cep.util.openURLInDefaultBrowser(asset.browser_download_url); }
+              else { window.open(asset.browser_download_url); }
+            } catch (e) {}
+            return;
+          }
           note('Downloading ' + tag + '...');
           var file = join(launcherDir(), 'Flow-Background-update.zxp');
-          var out = fs.createWriteStream(file);
           function downloadUpdate(url, redirects) {
             if (typeof redirects === 'undefined') { redirects = 5; }
-            https.get(url, function (res2) {
-              if (res2.statusCode >= 300 && res2.statusCode < 400 && res2.headers.location && redirects > 0) {
-                res2.resume();
-                downloadUpdate(res2.headers.location, redirects - 1);
-                return;
+            var y = new XMLHttpRequest();
+            y.open('GET', url, true);
+            y.responseType = 'arraybuffer';
+            y.onreadystatechange = function () {
+              if (y.readyState !== 4) { return; }
+              if (y.status >= 300 && y.status < 400) {
+                var loc = y.getResponseHeader('Location');
+                if (loc && redirects > 0) { downloadUpdate(loc, redirects - 1); return; }
               }
-              if (res2.statusCode !== 200) { note('Download failed: HTTP ' + res2.statusCode, true); try { fs.unlinkSync(file); } catch (e) {} return; }
-              res2.pipe(out);
-              out.on('finish', function () { out.close(); note('Update ' + tag + ' downloaded. Opening installer...'); shellOpen(file); });
-            }).on('error', function (e) { note('Download failed: ' + e.message, true); });
+              if (y.status !== 200) { note('Download failed: HTTP ' + y.status, true); try { fs.unlinkSync(file); } catch (e) {} return; }
+              try {
+                fs.writeFileSync(file, Buffer.from(y.response));
+                note('Update ' + tag + ' downloaded. Opening installer...');
+                shellOpen(file);
+              } catch (e) { note('Download failed: ' + e.message, true); }
+            };
+            y.onerror = function () { note('Download failed: network error', true); };
+            try { y.send(); } catch (e) { note('Download failed: ' + e.message, true); }
           }
           downloadUpdate(asset.browser_download_url);
         } catch (e) { note('Update check failed: ' + e.message, true); }
-      });
-    }).on('error', function (e) { note('Network error: ' + e.message, true); });
-      req.setTimeout(10000, function () { req.destroy(); if (!silent) { note('Update check timed out.', true); } });
-      setTimeout(function () { if (!silent) { note('Update check timed out.', true); } }, 11000);
+      };
+      x.onerror = function () { if (!silent) { note('Network error.', true); } };
+      x.ontimeout = function () { if (!silent) { note('Update check timed out.', true); } };
+      try { x.send(); } catch (e) { note('Update check failed: ' + e.message, true); }
+    } catch (e) {
+      try { note('Update check failed: ' + e.message, true); } catch (e2) { try { alert('Update check failed: ' + e.message); } catch (e3) {} }
+    }
   }
 
-  function restartAE() {
+function restartAE() {
     if (!confirm('Restart After Effects now? Save your work first.')) { return; }
     try {
       if (cp && fs) {
