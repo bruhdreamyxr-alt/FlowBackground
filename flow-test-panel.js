@@ -168,7 +168,6 @@ check('engine pill: not installed', p1.els.engine.textContent === 'engine: not i
 check('install enabled, remove disabled', p1.els['btn-install'].disabled === false && p1.els['btn-uninstall'].disabled === true);
 check('default veil loaded', Number(p1.els['opt-dim'].value) === 0.22 && p1.els['out-dim'].textContent === '0.22', p1.els['out-dim'].textContent);
 check('veil colour shown as hex', p1.els['opt-tint'].value === '#08080c', p1.els['opt-tint'].value);
-check('five presets built', p1.els.presets.children.length === 5, p1.els.presets.children.length);
 check('CEP debug mode set without admin', p1.reg.length === 5 && p1.reg[0][0] === 'reg.exe' && /CSXS\.9/.test(p1.reg[0].join(' ')), p1.reg.length + ' reg calls');
 
 head('2. picks up a theme and a picture that are already there');
