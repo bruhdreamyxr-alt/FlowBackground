@@ -261,58 +261,6 @@ function openFolder() {
     } catch (e) { /* the loader just keeps the last good theme */ }
     try { fs.copyFileSync(themePath(), backupPath()); } catch (e2) { }
   }
-  function aeBrightness() {
-    try {
-      var he = window.__adobe_cep__.getHostEnvironment();
-      var bg = he && he.appSkinInfo && he.appSkinInfo.panelBackgroundColor;
-      var c = (bg && (bg.color || bg)) || null;
-      if (!c) { return null; }
-      var r = (typeof c.red !== "undefined") ? c.red : c[0];
-      var g = (typeof c.green !== "undefined") ? c.green : c[1];
-      var b = (typeof c.blue !== "undefined") ? c.blue : c[2];
-      if (r === undefined) { return null; }
-      return (r + g + b) / (3 * 255);
-    } catch (e) { return null; }
-  }
-  function syncAeTheme() {
-    var cb = $("opt-auto-ae");
-    if (!cb || !cb.checked) { return; }
-    var lum = aeBrightness();
-    if (lum === null) { return; }
-    if (lum < 0.5) { theme.dim = 0.22; theme.tint = "8, 8, 12"; theme.text = "#cccccc"; }
-    else { theme.dim = 0.12; theme.tint = "200, 200, 210"; theme.text = "#222222"; }
-    syncUI(); saveTheme(true);
-  }
-  function loadTheme() {
-    var t = readTheme() || {};
-    theme = {};
-    for (var k in DEFAULTS) { theme[k] = (typeof t[k] === 'undefined') ? DEFAULTS[k] : t[k]; }
-  }
-  function saveTheme(quiet) {
-    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    if (quiet) { writeThemeNow(); } else { saveTimer = setTimeout(writeThemeNow, 180); }
-  }
-
-  /* colour helpers: the veil takes "r, g, b", the picker wants #rrggbb */
-  function hexToTint(h) {
-    var m = /^#([0-9a-f]{6})$/i.exec(String(h));
-    if (!m) { return null; }
-    var n = parseInt(m[1], 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(', ');
-  }
-  function tintToHex(s) {
-    var m = /^\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*$/.exec(String(s));
-    if (!m) { return null; }
-    function h(x) { var v = Math.min(255, parseInt(x, 10)).toString(16); return v.length < 2 ? '0' + v : v; }
-    return '#' + h(m[1]) + h(m[2]) + h(m[3]);
-  }
-  function normHex(v) {
-    var s = String(v || '');
-    if (/^#[0-9a-f]{6}$/i.test(s)) { return s; }
-    if (/^#[0-9a-f]{3}$/i.test(s)) { return '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3]; }
-    return '#cccccc';
-  }
-
   function syncUI() {
     var tintHex = tintToHex(theme.tint) || '#08080c';
     $('opt-size').value   = theme.size;
@@ -646,11 +594,6 @@ function openFolder() {
       applyDefaults();
       lookNote('Back to the built-in look - saved.');
     });
-    $('opt-auto-ae').addEventListener('change', function () {
-      theme.autoAe = $('opt-auto-ae').checked;
-      saveTheme(true);
-      syncAeTheme();
-    });
         $('btn-restart-ae').addEventListener('click', restartAE);
 $('btn-export-look').addEventListener('click', function () {
       if (!fs) { note('Node is required to export.', true); return; }
@@ -667,8 +610,7 @@ $('btn-export-look').addEventListener('click', function () {
       r.onload = function () {
         try {
           var o = JSON.parse(r.result);
-          for (var k in o) { if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) || k === 'glassStrong' || k === 'glassList' || k === 'position' || k === 'grid' || k === 'autoAe') { theme[k] = o[k]; } }
-          if (typeof theme.autoAe !== 'undefined') { var cb = $('opt-auto-ae'); if (cb) { cb.checked = !!theme.autoAe; } }
+          for (var k in o) { if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) || k === 'glassStrong' || k === 'glassList' || k === 'position' || k === 'grid') { theme[k] = o[k]; } }
           syncUI(); saveTheme(true); lookNote('Look imported.');
         } catch (e) { lookNote('That file is not a valid look.', true); }
       };
