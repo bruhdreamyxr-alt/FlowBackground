@@ -266,6 +266,24 @@ function openFolder() {
     theme = {};
     for (var k in DEFAULTS) { theme[k] = (typeof t[k] === 'undefined') ? DEFAULTS[k] : t[k]; }
   }
+  function hexToTint(h) {
+    var m = /^#([0-9a-f]{6})$/i.exec(String(h));
+    if (!m) { return null; }
+    var n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(', ');
+  }
+  function tintToHex(s) {
+    var m = /^\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*$/.exec(String(s));
+    if (!m) { return null; }
+    function h(x) { var v = Math.min(255, parseInt(x, 10)).toString(16); return v.length < 2 ? '0' + v : v; }
+    return '#' + h(m[1]) + h(m[2]) + h(m[3]);
+  }
+  function normHex(v) {
+    var s = String(v || '');
+    if (/^#[0-9a-f]{6}$/i.test(s)) { return s; }
+    if (/^#[0-9a-f]{3}$/i.test(s)) { return '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3]; }
+    return '#cccccc';
+  }
   function syncUI() {
     var tintHex = tintToHex(theme.tint) || '#08080c';
     $('opt-size').value   = theme.size;
