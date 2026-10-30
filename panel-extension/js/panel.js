@@ -252,6 +252,10 @@ function openFolder() {
   }
   /*  Written via a temp file + rename, so a crash mid-save can never leave a
       truncated theme behind, and a backup is kept alongside it.               */
+  function saveTheme(quiet) {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    if (quiet) { writeThemeNow(); } else { saveTimer = setTimeout(writeThemeNow, 180); }
+  }
   function writeThemeNow() {
     try {
       ensureDir(env.userDir);
