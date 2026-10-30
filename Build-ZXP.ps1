@@ -64,7 +64,7 @@ $version = $cur.ToString()
 
 # ---- payload lives in the source folder, so panel-extension\ is itself
 #      installable by simply copying it into the CEP extensions folder -------
-$payloadSrc = @('flow-bg.js', 'flow-bg.css', 'Install-FlowGifBg.ps1', 'Uninstall-FlowGifBg.ps1', 'Install-FlowGifBg.py', 'Uninstall-FlowGifBg.py', 'Install-FlowGifBg.pl', 'Uninstall-FlowGifBg.pl')
+$payloadSrc = @('flow-bg.js', 'flow-bg.css', 'Install-FlowGifBg.ps1', 'Uninstall-FlowGifBg.ps1')
 foreach ($f in $payloadSrc) {
     if (-not (Test-Path (Join-Path $Here $f))) { Say "  ! payload file missing: $f" 'Red'; exit 1 }
 }
