@@ -48,7 +48,6 @@
     }
     if (!os) { os = { homedir: function () { return ''; } }; }
   }
-  var isMac = (typeof process !== 'undefined' && process.platform === 'darwin');
   var isWin = (typeof process !== 'undefined' && process.platform === 'win32');
   var lastError = '';
 
@@ -89,10 +88,6 @@
   function findFlow() {
     if (!fs) { return ''; }
     var roots = [];
-    if (isMac) {
-      roots.push(join(home(), 'Library', 'Application Support', 'Adobe', 'CEP', 'extensions'));
-      roots.push('/Library/Application Support/Adobe/CEP/extensions');
-    } else {
       var pf   = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
       var pf64 = process.env.ProgramFiles || 'C:\\Program Files';
       roots = [
@@ -101,7 +96,7 @@
         join(process.env.APPDATA      || join(home(), 'AppData', 'Roaming'), 'Adobe', 'CEP', 'extensions'),
         join(process.env.LOCALAPPDATA || join(home(), 'AppData', 'Local'),    'Adobe', 'CEP', 'extensions')
       ];
-    }
+
     for (var r = 0; r < roots.length; r++) {
       var names;
       try { names = fs.readdirSync(roots[r]); } catch (e) { continue; }
@@ -205,8 +200,7 @@
 function openFolder() {
     ensureDir(env.userDir);
     try {
-      if (isMac) { cp.exec('open "' + env.userDir + '"'); }
-      else { cp.exec('explorer.exe "' + env.userDir + '"'); }
+      cp.exec('explorer.exe "' + env.userDir + '"');
     }
     catch (e) { note('Could not open the folder.', true); }
   }
@@ -395,36 +389,10 @@ function openFolder() {
     return file;
   }
 
-  function shQuote(s) { return "'" + String(s).replace(/'/g, "'\\''") + "'"; }
   function asQuote(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
 
   function runInstaller(kind, done) {
     var install = kind === 'install';
-    if (isMac) {
-      var script = join(env.payload, install ? 'Install-FlowGifBg.pl' : 'Uninstall-FlowGifBg.pl');
-      if (!exists(script)) { note('This extension is incomplete - the Mac installer is missing.', true); done(false); return; }
-      if (!cp || !fs) { note('This panel needs Node to start the installer.', true); done(false); return; }
-      var cmd = 'perl ' + shQuote(script) + (install ? ' --path ' + shQuote(env.flowDir) + ' --folder ' + shQuote(env.userDir) + ' --no-debug-mode --no-artwork' : ' --path ' + shQuote(env.flowDir));
-      var osa = 'do shell script ' + asQuote(cmd) + ' with administrator privileges';
-      note('macOS will ask for your password to install into Flow - that is the one admin step.');
-      try { cp.execFile('osascript', ['-e', osa], function (e) { if (e) { note('Installer did not finish: ' + e.message, true); } }); }
-      catch (e) { note('Could not start the installer: ' + e.message, true); done(false); return; }
-      var waited = 0;
-      function poll() {
-        if (engineInstalled() === install || waited > 150) {
-          if (engineInstalled() === install) { done(true); return; }
-          note('The installer did not finish, or was cancelled. You can run it by hand in Terminal:\n' +
-               cmd, true);
-          done(false);
-          return;
-        }
-        waited++;
-        setTimeout(poll, 1000);
-      }
-      setTimeout(poll, 1000);
-      return;
-    }
-
     var script  = join(env.payload, install ? 'Install-FlowGifBg.ps1' : 'Uninstall-FlowGifBg.ps1');
     if (!exists(script)) { note('This extension is incomplete - the script is missing.', true); done(false); return; }
     if (!cp || !fs) { note('This panel needs Node to start the installer.', true); done(false); return; }
@@ -611,8 +579,7 @@ function openFolder() {
       try { ensureDir(env.userDir); fs.writeFileSync(file, text); } catch (e) { }
       var copied = false;
       try {
-        if (isMac) { cp.execFileSync('pbcopy', [], { input: text, encoding: 'utf8' }); copied = true; }
-        else { cp.execFileSync('clip.exe', [], { input: text, encoding: 'utf8' }); copied = true; }
+        cp.execFileSync('clip.exe', [], { input: text, encoding: 'utf8' }); copied = true;
       } catch (e2) { }
       lookNote(copied ? 'Diagnostics copied to the clipboard, and saved as ' + basename(file) + '.'
                       : 'Diagnostics saved as ' + basename(file) + '.');
