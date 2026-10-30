@@ -96,7 +96,7 @@ foreach ($sc in @(@{ n = 'HandModified'; hm = $true }, @{ n = 'StockFlow'; hm = 
     $h = [IO.File]::ReadAllText($idx)
     Chk "[$($sc.n)] flow-bg.css copied"    (Test-Path $instCss)
     Chk "[$($sc.n)] flow-bg.js copied"     (Test-Path "$fake\panel\js\flow-bg.js")
-    Chk "[$($sc.n)] backup byte-identical" ((Get-FileHash "$fake\panel\index.html.flowbg-backup").Hash -eq (Get-FileHash "$fake\pristine.txt").Hash)
+    Chk "[$($sc.n)] backup byte-identical" ( (Test-Path "$fake\panel\index.html.flowbg-backup") -and ((Get-FileHash "$fake\panel\index.html.flowbg-backup").Hash -eq (Get-FileHash "$fake\pristine.txt").Hash) )
     Chk "[$($sc.n)] exactly 1 link"        (([regex]::Matches($h, 'css/flow-bg\.css')).Count -eq 1)
     Chk "[$($sc.n)] exactly 1 script"      (([regex]::Matches($h, 'js/flow-bg\.js')).Count -eq 1)
     Chk "[$($sc.n)] block inside <head>"   ($h.IndexOf('flow-gif-bg:start') -lt $h.IndexOf('</head>'))
@@ -118,7 +118,7 @@ foreach ($sc in @(@{ n = 'HandModified'; hm = $true }, @{ n = 'StockFlow'; hm = 
     Chk "[$($sc.n)] still exactly 1 link"       (([regex]::Matches($h2, 'css/flow-bg\.css')).Count -eq 1)
     Chk "[$($sc.n)] stamp not duplicated"       (([regex]::Matches([IO.File]::ReadAllText($instCss), '--flow-bg-dir:')).Count -eq 1 -and
                                                  [IO.File]::ReadAllText($instCss) -eq $css1)
-    Chk "[$($sc.n)] backup still pristine"      ((Get-FileHash "$fake\panel\index.html.flowbg-backup").Hash -eq (Get-FileHash "$fake\pristine.txt").Hash)
+    Chk "[$($sc.n)] backup still pristine" ( (Test-Path "$fake\panel\index.html.flowbg-backup") -and ((Get-FileHash "$fake\panel\index.html.flowbg-backup").Hash -eq (Get-FileHash "$fake\pristine.txt").Hash) )
     Chk "[$($sc.n)] your own picture untouched" ([IO.File]::ReadAllText($sample) -eq 'MY-OWN-BACKGROUND-LEAVE-IT-ALONE')
 
     # ---- uninstall ----

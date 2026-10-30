@@ -201,10 +201,8 @@ foreach ($target in $targets) {
     $bak = Join-Path (Split-Path $idxFile) $Backup
     $raw = [IO.File]::ReadAllText($idxFile)
 
-    if ($raw -notmatch [regex]::Escape($StartMark)) {
-        Step ('back up index.html -> ' + $Backup) {
-            if (-not (Test-Path $bak)) { Copy-Item $idxFile $bak -Force }
-        }
+    Step ('back up index.html -> ' + $Backup) {
+        if (-not (Test-Path $bak)) { Copy-Item $idxFile $bak -Force }
     }
 
     $script:LooseCleaned = $false
@@ -220,7 +218,7 @@ foreach ($target in $targets) {
         Step 'refresh the flow-gif-bg block in index.html' { [IO.File]::WriteAllText($idxFile, $new) }
     } elseif ($new -match '</head>') {                                   # first time
         $rx = New-Object System.Text.RegularExpressions.Regex '</head>'
-        $new = $rx.Replace($new, $blockEsc + "`r`n  </head>", 1)
+        $new = $rx.Replace($new, $blockEsc + "`r`n</head>", 1)
         Step 'add the flow-gif-bg block to <head> in index.html' { [IO.File]::WriteAllText($idxFile, $new) }
     } else {
         Say '  ! could not find </head> in index.html - leaving it untouched.' 'Red'
