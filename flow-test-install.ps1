@@ -53,7 +53,11 @@ $loosePats = @(
     '(?m)^[ \t]*<link[^>]*flow-bg\.css[^>]*/?>[ \t]*\r?\n',
     '(?m)^[ \t]*<script[^>]*flow-bg\.js[^>]*>[ \t]*</script>[ \t]*\r?\n'
 )
-function CleanLoose([string]$t) { foreach ($p in $loosePats) { $t = [regex]::Replace($t, $p, '') }; return $t }
+function CleanLoose([string]$t) {
+    $t = [regex]::Replace($t, '(?s)[ \t]*<!-- flow-gif-bg:start -->.*?<!-- flow-gif-bg:end -->[ \t]*\r?\n', '')
+    foreach ($p in $loosePats) { $t = [regex]::Replace($t, $p, '') }
+    return $t
+}
 
 function Run($script, [string[]]$extra) {
     $clean = @($extra | ForEach-Object { $_.Trim('"') })
@@ -67,7 +71,15 @@ function NewFake([string]$name, [bool]$handModified) {
     Copy-Item "$ext\panel\css\style.css", "$ext\panel\css\_variables.css", "$ext\panel\css\preset.css" "$f\panel\css\" -Force
     Set-Content "$f\panel\js\panel.js" -Value '// stand-in' -Encoding UTF8
     $html = [IO.File]::ReadAllText("$ext\panel\index.html")
-    if (-not $handModified) { $html = CleanLoose $html }        # what a virgin Flow looks like
+    $html = CleanLoose $html
+    if ($handModified) {
+        $legacy = @'
+    <!-- animated GIF background -->
+    <link href="css/flow-bg.css" rel="stylesheet" />
+    <script type="text/javascript" src="js/flow-bg.js"></script>
+'@
+        $html = $html.Replace('</head>', $legacy + "`r`n</head>")
+    }
     [IO.File]::WriteAllText("$f\panel\index.html", $html)
     [IO.File]::WriteAllText("$f\pristine.txt", $html)
     return $f

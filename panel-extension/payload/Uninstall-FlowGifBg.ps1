@@ -113,8 +113,15 @@ foreach ($target in $targets) {
     $raw = [IO.File]::ReadAllText($idxFile)
     $cur = $raw
     if ($raw -match [regex]::Escape($StartMark)) {
-        $pat  = '(?s)[ \t]*' + [regex]::Escape($StartMark) + '.*?' + [regex]::Escape($EndMark) + '[ \t]*\r?\n'
-        $cur = [regex]::Replace($raw, $pat, '')
+        $headPat = '(?m)^([ \t]*)' + [regex]::Escape($StartMark) +
+                   '(?s:.*?)' + [regex]::Escape($EndMark) + '[ \t]*\r?\n(?=</head>)'
+        if ([regex]::IsMatch($raw, $headPat)) {
+            $cur = [regex]::Replace($raw, $headPat, '$1')
+        } else {
+            $pat = '(?s)[ \t]*' + [regex]::Escape($StartMark) + '.*?' +
+                   [regex]::Escape($EndMark) + '[ \t]*\r?\n'
+            $cur = [regex]::Replace($raw, $pat, '')
+        }
         Step 'remove the flow-gif-bg block from index.html' { [IO.File]::WriteAllText($idxFile, $cur) }
     } elseif (Test-Path $bak) {
         Step ('restore index.html from ' + $Backup) { Copy-Item $bak $idxFile -Force }

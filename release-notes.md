@@ -1,9 +1,11 @@
-# Flow Background v1.0.95
+# Flow Background v1.0.96
 
 ## What's new
 
 The update check reports results in an in-panel modal instead of JavaScript
 alerts. Up-to-date status, errors, and download progress are shown in the panel.
+Uninstalling the engine now restores the original indentation around Flow's
+`</head>` tag.
 
 ## Current features
 
