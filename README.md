@@ -50,8 +50,8 @@ CEP debug mode for your account, which the panel does for itself anyway).
 Any file name works. If several are in the folder, **the newest wins**.
 
 **Look** — veil strength, veil colour, glass opacity, label colour, Flow's accent
-colour, and how the picture is fitted. **Presets** gives five starting points
-(Flow default, Cinematic, Neon, Bright, Glass); *Default look* reverts it all.
+colour, and how the picture is fitted. Save your own looks as presets, then apply,
+rename, or delete them; *Default look* restores the built-in colours.
 
 Colours are re-applied automatically: Flow rewrites its own `--color-*` values at
 startup and whenever you change the AE interface brightness, and the engine
@@ -150,7 +150,10 @@ even a hand-edited Flow can be restored exactly as it was.
 **Someone who installed the `.zxp`**: send them the new `.zxp` and have them
 double-click it. ZXP Installer replaces what is there — it keys off the bundle
 version, so `Build-ZXP.ps1` bumps the version automatically on every rebuild
-(shipping the same number twice would be silently skipped).
+(shipping the same number twice would be silently skipped). If the signing
+certificate has changed, they may need to uninstall the old extension before
+installing the new one; a different signing identity cannot always update in
+place.
 
 Either way, press **Install into Flow** once afterwards: that re-copies the
 engine into Flow and is safe to repeat.
@@ -166,7 +169,7 @@ without starting After Effects.
 | Suite | What it proves | Checks |
 | --- | --- | --- |
 | `flow-test-node.js` | the engine: which file wins, cache-busting, swaps, theme validation, the canvas hook | 71 |
-| `flow-test-panel.js` | the panel: folder resolution, saving, the hidden launcher, diagnostics | 69 |
+| `flow-test-panel.js` | the panel: folder resolution, saving, the hidden launcher, diagnostics | 68 |
 | `flow-test-install.ps1` | install / backup / idempotency / uninstall on stock *and* hand-edited Flow | 48 |
 | `flow-test-visual.ps1` | **real headless Chrome**: the CSS really loads, the picture really decodes and paints, the veils really land, `#container` really stays transparent, scrollbars really are gone | 19 |
 
@@ -180,5 +183,10 @@ tests could not: glass surfaces that were still using a hard-coded grey (so
 "veil colour" only half worked), and two veils stacking on top of each other in
 the graph area, burying the picture at ~77% opacity.
 
-Keep `build\codex.p12` next to the scripts: rebuilding with the same certificate
-is what lets the ZXP update cleanly on a machine that already has it.
+Keep `build\codex.p12` and `build\codex-password.dpapi` locally and never commit
+them. The password file is encrypted for the Windows user who built the
+certificate, so builds run without putting a password in the script or command
+line. Back up both files securely to preserve the signing identity; the
+encrypted password file cannot be used by another Windows account.
+Replacing the certificate changes the signing identity and may require users to
+uninstall and reinstall the extension instead of updating it in place.

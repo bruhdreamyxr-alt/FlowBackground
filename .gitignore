@@ -1,0 +1,6 @@
+/build/*.p12
+/build/*.dpapi
+/build/last-version.txt
+/build/*/
+/dist/
+/.rnd

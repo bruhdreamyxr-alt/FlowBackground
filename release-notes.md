@@ -1,36 +1,24 @@
-# Flow Background v1.0.31
+# Flow Background v1.0.95
 
-Welcome to the first public release of Flow Background & Theme! 🎉
+## What's new
 
-## What it does
-A small After Effects CEP extension that gives the Flow easing panel a background of your choosing (animated GIF/WebP/APNG supported) plus a colour changer for the panel and the veil over the picture. Everything updates live while AE stays open.
+The update check reports results in an in-panel modal instead of JavaScript
+alerts. Up-to-date status, errors, and download progress are shown in the panel.
 
-## Highlights
-- Animated/still backgrounds from your own folder (newest file wins)
-- Theme controls: veil strength/colour, glass opacity, label/accent colours, fit mode
-- Five presets (Flow default, Cinematic, Neon, Bright, Glass)
-- One-time "Install into Flow" copies a tiny engine into Flow (admin prompt once)
-- macOS support (Perl-based installer, no Xcode/Python needed)
-- Auto-match AE interface brightness
-- Export/Import look, drag-and-drop, keyboard shortcuts
-- Right-click context menu + Restart After Effects button
-- Auto-updater that checks GitHub releases
+## Current features
 
-## Installation
-1. Double-click `Flow-Background.zxp` (accept the self-signed certificate prompt).
-2. Restart After Effects.
-3. Open Window > Extensions > Flow Background.
-4. Click "Install into Flow" once (one admin prompt).
-5. Choose a picture.
+- Animated and still backgrounds, updated live from your pictures folder.
+- Controls for picture fit, veil, glass, and Flow panel colours.
+- Custom looks that you can save, apply, rename, and delete. There are no
+  built-in starter looks; **Default look** restores the default settings.
+- One-time engine installation into Flow, plus removal and diagnostics.
+- Manual update checks and a quiet check when the panel starts.
 
-## Changes in this release
-- Fixed panel.js syntax error (stray "okay" prefix) that prevented the JS from running.
-- Fixed "Install into Flow" button being disabled when the engine was out of date.
-- Added auto-updater (Check for updates button + silent check on launch).
-- Added first-run welcome message.
-- macOS installer switched from Python to Perl (no Xcode dependency).
-- Added restart helper and dev-reload workflow.
-- Extended CEP debug-mode range for newer AE versions.
-- Various robustness fixes.
+## Signing certificate change
 
-Congratulations on the first release! 🚀
+This version uses a new signing certificate because the previous private
+certificate was exposed in the public Git history. ZXP Installer may not allow
+this version to replace the older-signed extension in place. If installation
+fails, uninstall the old Flow Background extension, then install this version.
+
+For installation, usage, and testing instructions, see [README.md](./README.md).

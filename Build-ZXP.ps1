@@ -10,16 +10,16 @@
 
   The certificate is self-signed on purpose: this is for you and your friends,
   not for the Adobe Exchange. Adobe's ZXP Installer installs a self-signed ZXP
-  after one "certificate is not trusted" prompt. Keep build\codex.p12 next to
-  this script - rebuild with the same certificate so extensions update cleanly.
+  after one "certificate is not trusted" prompt. Keep build\codex.p12 locally
+  and never commit it. Its password is cached encrypted for the current Windows
+  user in build\codex-password.dpapi.
 
   Run:  powershell -ExecutionPolicy Bypass -File .\Build-ZXP.ps1
 #>
 [CmdletBinding()]
 param(
     [switch]$Force,
-    [switch]$Timestamp,
-    [string]$CertPassword = 'REDACTED'
+    [switch]$Timestamp
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,12 +29,47 @@ $build  = Join-Path $Here 'build'
 $dist   = Join-Path $Here 'dist'
 $signer = Join-Path $Here 'tools\ZXPSignCmd.exe'
 $cert   = Join-Path $build 'codex.p12'
+$certPasswordFile = Join-Path $build 'codex-password.dpapi'
 $outZxp = Join-Path $dist 'Flow-Background.zxp'
 
 function Say($m, $c = 'Gray') { Write-Host $m -ForegroundColor $c }
 
 if (-not (Test-Path $src))    { Say "No panel-extension folder at $src" 'Red'; exit 1 }
 if (-not (Test-Path $signer)) { Say 'ZXPSignCmd.exe is missing - see tools\' 'Red'; exit 1 }
+
+if (Test-Path $certPasswordFile) {
+    try {
+        $securePassword = ConvertTo-SecureString (Get-Content $certPasswordFile -Raw).Trim()
+    } catch {
+        Say 'Cannot decrypt the cached certificate password as this Windows user.' 'Red'
+        exit 1
+    }
+} elseif (Test-Path $cert) {
+    $securePassword = Read-Host 'Enter the signing certificate password' -AsSecureString
+} else {
+    $bytes = New-Object byte[] 32
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+    $plainPassword = [Convert]::ToBase64String($bytes)
+    [Array]::Clear($bytes, 0, $bytes.Length)
+    $securePassword = ConvertTo-SecureString $plainPassword -AsPlainText -Force
+    $plainPassword = $null
+}
+
+if (-not (Test-Path $certPasswordFile)) {
+    try {
+        ConvertFrom-SecureString $securePassword | Set-Content -Path $certPasswordFile -NoNewline
+    } catch {
+        Say 'Could not securely cache the signing password for this Windows user.' 'Red'
+        exit 1
+    }
+}
+$passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+try {
+    $CertPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
+}
 
 # ---- read the bundle id out of the manifest (no hard-coded copy) -------------
 [xml]$mf = Get-Content (Join-Path $src 'CSXS\manifest.xml') -Raw
